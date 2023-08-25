@@ -1,0 +1,33 @@
+{
+  "name": "drizzle-dbml-generator",
+  "version": "0.1.0",
+  "description": "Convert your Drizzle ORM schema into DBML markup",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsup src/index.ts --format cjs,esm --dts",
+    "fmt": "npx prettier --write .",
+    "lint": "npx eslint . && npx tsc --noEmit"
+  },
+  "keywords": [
+    "drizzle-orm",
+    "dbml",
+    "typescript"
+  ],
+  "author": "Mario564",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.5.6",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "drizzle-orm": "^0.28.5",
+    "eslint": "^8.47.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.2",
+    "tsup": "^7.2.0",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.3"
+  }
+}
