@@ -62,6 +62,40 @@ function typesTest() {
   expect(compareWith(generated, './pg/types.dbml')).toBe(true);
 }
 
+function constraintsTest() {
+  const myTable = pgTable('my_table', {
+    pk: integer('pk').primaryKey(),
+    nn: integer('nn').notNull(),
+    u: integer('u').unique(),
+    defaultS: text('default_s').default('some text'),
+    defaultN: integer('default_n').default(1),
+    defaultNow: timestamp('default_now').defaultNow(),
+    defaultA: integer('default_a').array().default([1, 2, 3]),
+    ai: serial('ai'),
+    multiple: text('multiple').notNull().default('other text')
+  });
+
+  const schema = { myTable } as unknown as PgSchema;
+  const generated = pgGenerator(schema);
+  expect(compareWith(generated, './pg/constraints.dbml')).toBe(true);
+}
+
+function inlineFkTest() {
+  const users = pgTable('users', {
+    id: serial('id').primaryKey()
+  });
+  const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    postedById: integer('posted_by_id').notNull().references(() => users.id)
+  });
+
+  const schema = { users, posts } as unknown as PgSchema;
+  const generated = pgGenerator(schema);
+  expect(compareWith(generated, './pg/inline-fks.dbml')).toBe(true);
+}
+
 describe('Postgres dialect tests', () => {
   it('Outputs all native types', typesTest);
+  it('Outputs all column constraints', constraintsTest);
+  it('Outputs an inline foreign key', inlineFkTest);
 });

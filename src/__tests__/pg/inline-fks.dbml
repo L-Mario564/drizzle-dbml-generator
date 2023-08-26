@@ -1,0 +1,8 @@
+table users {
+  id serial [pk, not null, increment]
+}
+
+table posts {
+  id serial [pk, not null, increment]
+  posted_by_id integer [not null, ref: > users.id]
+}

@@ -1,23 +1,71 @@
-import { Relations } from 'drizzle-orm';
+import { Relations, SQL } from 'drizzle-orm';
 import { InlineForeignKeys, Schema, TableName, isPgEnumSym } from '~/symbols';
 import { DBML } from '~/dbml';
-import { PgTable } from 'drizzle-orm/pg-core';
-import type { AnyPgColumn, PgEnum } from 'drizzle-orm/pg-core';
+import type { BuildQueryConfig } from 'drizzle-orm';
+import type { AnyPgColumn, ForeignKey, PgEnum } from 'drizzle-orm/pg-core';
 import type { PgSchema, AnyPgTable } from '~/types';
 
-// TODO: Constraints
-function generateColumn(column: AnyPgColumn) {
+function generateColumn(column: AnyPgColumn, fk?: ForeignKey) {
   const dbml = new DBML()
     .tab()
     .escapeSpaces(column.name)
     .insert(' ')
     .escapeSpaces(column.getSQLType());
+  const constraints: string[] = [];
+
+  if (column.primary) {
+    constraints.push('pk');
+  }
+
+  if (column.notNull) {
+    constraints.push('not null');
+  }
+
+  if (column.isUnique) {
+    constraints.push('unique');
+  }
+
+  if (column.getSQLType().includes('serial')) {
+    constraints.push('increment');
+  }
+
+  if (column.default) {
+    if (typeof column.default === 'string') {
+      constraints.push(`default: '${column.default}'`);
+    } else if (typeof column.default === 'boolean' || typeof column.default === 'number' || column.default === null) {
+      constraints.push(`default: ${column.default}`);
+    } else if (column.default instanceof SQL) {
+      const queryConfig: BuildQueryConfig = {
+        escapeName: (name) => `"${name}"`,
+        escapeParam: (num) => `$${num + 1}`,
+        escapeString: (str) => `'${str.replace(/'/g, "''")}'`
+      };
+
+      constraints.push(`default: \`${column.default.toQuery(queryConfig).sql}\``);
+    } else {
+      constraints.push(`default: \`${JSON.stringify(column.default)}\``);
+    }
+  }
+
+  if (fk) {
+    const foreignColumn = fk.reference().foreignColumns[0];
+    const foreignTable = foreignColumn.table as unknown as AnyPgTable;
+    const schema = foreignTable[Schema] ? `${foreignTable[Schema]}.` : '';
+    constraints.push(`ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`);
+  }
+
+  if (constraints.length > 0) {
+    const constraintsStr = constraints.reduce((str, constraint) => `${str}, ${constraint}`, '').slice(2);
+    dbml.insert(` [${constraintsStr}]`);
+  }
+  
   return dbml.build();
 }
 
 // TODO: Indexes
 function generateTable(table: AnyPgTable) {
   const dbml = new DBML().insert('table ');
+  const fks = table[InlineForeignKeys];
 
   if (table[Schema]) {
     dbml.escapeSpaces(table[Schema]).insert('.');
@@ -30,7 +78,9 @@ function generateTable(table: AnyPgTable) {
 
   for (const columnName in table) {
     const column = table[columnName as keyof typeof table] as AnyPgColumn;
-    const columnDBML = generateColumn(column);
+    const inlineFk = fks.find((fk) => fk.reference().columns.at(0)?.name === column.name);
+
+    const columnDBML = generateColumn(column, inlineFk);
     dbml.insert(columnDBML).newLine();
   }
   
@@ -69,7 +119,7 @@ export function pgGenerator(schema: PgSchema) {
 
     if (isPgEnum(value)) {
       generatedEnums.push(generateEnum(value));
-    } else if (value instanceof PgTable) {
+    } else if (!(value instanceof Relations)) {
       generatedTables.push(generateTable(value));
     }
   }
