@@ -51,7 +51,24 @@ function generateColumn(column: AnyPgColumn, fk?: ForeignKey) {
     const foreignColumn = fk.reference().foreignColumns[0];
     const foreignTable = foreignColumn.table as unknown as AnyPgTable;
     const schema = foreignTable[Schema] ? `${foreignTable[Schema]}.` : '';
-    constraints.push(`ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`);
+    const refStr = `ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`;
+    const actions: string[] = [];
+    let actionsStr = '';
+
+    if (fk.onDelete) {
+      actions.push(`delete: ${fk.onDelete}`);
+    }
+
+    if (fk.onUpdate) {
+      actions.push(`update: ${fk.onUpdate}`);
+    }
+
+    if (actions.length > 0) {
+      const actionsFormatted = actions.reduce((str, action) => `${str}, ${action}`, '').slice(2);
+      actionsStr = `, note: 'actions: [${actionsFormatted}]'`;
+    }
+
+    constraints.push(`${refStr}${actionsStr}`);
   }
 
   if (constraints.length > 0) {

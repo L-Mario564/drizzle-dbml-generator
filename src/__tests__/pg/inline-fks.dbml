@@ -4,5 +4,5 @@ table users {
 
 table posts {
   id serial [pk, not null, increment]
-  posted_by_id integer [not null, ref: > users.id]
+  posted_by_id integer [not null, ref: > users.id, note: 'actions: [delete: cascade, update: no action]']
 }

@@ -6,6 +6,7 @@ import {
   char,
   date,
   doublePrecision,
+  foreignKey,
   integer,
   interval,
   json,
@@ -13,6 +14,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   real,
   serial,
   smallint,
@@ -20,6 +22,8 @@ import {
   text,
   time,
   timestamp,
+  unique,
+  uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core';
 import { compareWith } from '../utils';
@@ -86,7 +90,10 @@ function inlineFkTest() {
   });
   const posts = pgTable('posts', {
     id: serial('id').primaryKey(),
-    postedById: integer('posted_by_id').notNull().references(() => users.id)
+    postedById: integer('posted_by_id').notNull().references(() => users.id, {
+      onDelete: 'cascade',
+      onUpdate: 'no action'
+    })
   });
 
   const schema = { users, posts } as unknown as PgSchema;
