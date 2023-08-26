@@ -1,0 +1,34 @@
+enum my_enum {
+  value_1
+  value_2
+  value_3
+}
+
+table my_table {
+  integer integer
+  smallint smallint
+  bigint bigint
+  serial serial
+  smallserial smallserial
+  bigserial bigserial
+  boolean boolean
+  text text
+  varchar varchar
+  char char
+  numeric numeric
+  real real
+  double_precision "double precision"
+  json json
+  jsonb jsonb
+  time time
+  timestamp timestamp
+  timestamp_p3 "timestamp (3)"
+  timestamp_wt "timestamp with time zone"
+  date date
+  interval interval
+  interval_day "interval day"
+  interval_p3 interval(3)
+  an_enum my_enum
+  int_arr integer[]
+  int_2d_arr integer[3][]
+}
