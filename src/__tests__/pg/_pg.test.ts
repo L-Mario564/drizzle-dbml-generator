@@ -99,7 +99,29 @@ function inlineFkTest() {
 
   const schema = { users, posts } as unknown as PgSchema;
   const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/inline-fks.dbml')).toBe(true);
+  expect(compareWith(generated, './pg/inline-fk.dbml')).toBe(true);
+}
+
+function fkTest() {
+  const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    registeredAt: timestamp('registered_at'),
+    username: text('username'),
+  });
+  const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    postedByUserRegisteredAt: timestamp('posted_by_user_registered_at'),
+    postedBy: text('posted_by')
+  }, (tbl) => ({
+    fk: foreignKey({
+      columns: [tbl.postedBy, tbl.postedByUserRegisteredAt],
+      foreignColumns: [users.username, users.registeredAt]
+    })
+  }));
+
+  const schema = { users, posts } as unknown as PgSchema;
+  const generated = pgGenerator(schema);
+  expect(compareWith(generated, './pg/fk.dbml')).toBe(true);
 }
 
 function indexesTest() {
@@ -127,5 +149,6 @@ describe('Postgres dialect tests', () => {
   it('Outputs all native types', typesTest);
   it('Outputs all column constraints', constraintsTest);
   it('Outputs an inline foreign key', inlineFkTest);
-  it('Outputs al indexes', indexesTest);
+  it('Outputs a foreign key', fkTest);
+  it('Outputs all indexes', indexesTest);
 });

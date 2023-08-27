@@ -1,31 +1,53 @@
-import { formatList } from '~/utils';
+import { formatList, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
-import { Relations } from 'drizzle-orm';
+import { Relations, SQL } from 'drizzle-orm';
 import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName } from '~/symbols';
 import { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint, isPgEnum } from 'drizzle-orm/pg-core';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
-import type { AnySchema, AnyTable } from '~/types';
+import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
 export abstract class BaseGenerator<
   Schema extends AnySchema = AnySchema,
   Table extends AnyTable = AnyTable,
   Column extends AnyColumn = AnyColumn
 > {
+  private readonly schema: Schema;
+  private readonly relational: boolean;
+  private generatedRefs: string[] = [];
   protected buildQueryConfig: BuildQueryConfig = {
     escapeName: () => '',
     escapeParam: () => '',
     escapeString: () => ''
   };
 
+  constructor(schema: Schema, relational: boolean) {
+    this.schema = schema;
+    this.relational = relational;
+  }
+
   protected isIncremental(_column: Column) {
     return false;
   }
 
-  protected mapDefaultValue(_value: unknown) {
-    return '';
+  protected mapDefaultValue(value: unknown) {
+    let str = '';
+
+    if (typeof value === 'string') {
+      str = `'${value}'`;
+    } else if (typeof value === 'boolean' || typeof value === 'number') {
+      str = `${value}`;
+    } else if (value === null) {
+      str = 'null';
+    } else if (value instanceof SQL) {
+      str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
+    } else {
+      str = `\`${JSON.stringify(value)}\``;
+    }
+
+    return str;
   }
 
-  protected generateColumn(column: Column, fk?: ForeignKey) {
+  protected generateColumn(column: Column) {
     const dbml = new DBML()
       .tab()
       .escapeSpaces(column.name)
@@ -53,28 +75,28 @@ export abstract class BaseGenerator<
       constraints.push(`default: ${this.mapDefaultValue(column.default)}`);
     }
 
-    if (fk) {
-      const foreignColumn = fk.reference().foreignColumns[0];
-      const foreignTable = foreignColumn.table as unknown as Table;
-      const schema = foreignTable[Schema] ? `${foreignTable[Schema]}.` : '';
-      const refStr = `ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`;
-      const actions: string[] = [];
-      let actionsStr = '';
+    // if (fk) {
+    //   const foreignColumn = fk.reference().foreignColumns[0];
+    //   const foreignTable = foreignColumn.table as unknown as Table;
+    //   const schema = foreignTable[Schema] ? `${foreignTable[Schema]}.` : '';
+    //   const refStr = `ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`;
+    //   const actions: string[] = [];
+    //   let actionsStr = '';
 
-      if (fk.onDelete) {
-        actions.push(`delete: ${fk.onDelete}`);
-      }
+    //   if (fk.onDelete) {
+    //     actions.push(`delete: ${fk.onDelete}`);
+    //   }
 
-      if (fk.onUpdate) {
-        actions.push(`update: ${fk.onUpdate}`);
-      }
+    //   if (fk.onUpdate) {
+    //     actions.push(`update: ${fk.onUpdate}`);
+    //   }
 
-      if (actions.length > 0) {
-        actionsStr = `, note: 'actions: [${formatList(actions)}]'`;
-      }
+    //   if (actions.length > 0) {
+    //     actionsStr = `, note: 'actions: [${formatList(actions)}]'`;
+    //   }
 
-      constraints.push(`${refStr}${actionsStr}`);
-    }
+    //   constraints.push(`${refStr}${actionsStr}`);
+    // }
 
     if (constraints.length > 0) {
       dbml.insert(` [${formatList(constraints)}]`);
@@ -84,8 +106,11 @@ export abstract class BaseGenerator<
   }
 
   protected generateTable(table: Table) {
+    if (!this.relational) {
+      this.generateForeignKeys(table[InlineForeignKeys]);
+    }
+
     const dbml = new DBML().insert('table ');
-    const fks = table[InlineForeignKeys];
   
     if (table[Schema]) {
       dbml.escapeSpaces(table[Schema]).insert('.');
@@ -98,14 +123,19 @@ export abstract class BaseGenerator<
   
     for (const columnName in table) {
       const column = table[columnName] as unknown as Column;
-      const inlineFk = fks.find((fk) => fk.reference().columns.at(0)?.name === column.name);
-  
-      const columnDBML = this.generateColumn(column, inlineFk);
+      const columnDBML = this.generateColumn(column);
       dbml.insert(columnDBML).newLine();
     }
-  
-    if (table[ExtraConfigBuilder]) {
-      const indexes = table[ExtraConfigBuilder](table);
+
+    const extraConfig = table[ExtraConfigBuilder];
+    const builtIndexes = Object
+      .values(table[ExtraConfigBuilder]?.(table) || {})
+      .map((b: AnyBuilder) => b.build(table));
+    const fks = builtIndexes.filter((index) => index instanceof ForeignKey) as unknown as ForeignKey[];
+    this.generateForeignKeys(fks);
+
+    if (extraConfig && builtIndexes.length > fks.length) {
+      const indexes = extraConfig(table);
   
       dbml
         .newLine()
@@ -118,9 +148,7 @@ export abstract class BaseGenerator<
         dbml.tab(2);
   
         if (index instanceof Index) {
-          const idxColumns = index.config.columns.length === 1
-            ? index.config.columns[0].name
-            : `(${formatList(index.config.columns.map((column) => column.name))})`;
+          const idxColumns = wrapColumns(index.config.columns);
           const idxProperties = index.config.name ?
             ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
             : '';
@@ -128,16 +156,12 @@ export abstract class BaseGenerator<
         }
   
         if (index instanceof PrimaryKey) {
-          const pkColumns = index.columns.length === 1
-            ? index.columns[0].name
-            : `(${formatList(index.columns.map((column) => column.name))})`;
+          const pkColumns = wrapColumns(index.columns);
           dbml.insert(`${pkColumns} [pk]`);
         }
   
         if (index instanceof UniqueConstraint) {
-          const uqColumns = index.columns.length === 1
-            ? index.columns[0].name
-            : `(${formatList(index.columns.map((column) => column.name))})`;
+          const uqColumns = wrapColumns(index.columns);
           const uqProperties = index.name
             ? `[name: '${index.name}', unique]`
             : '[unique]';
@@ -161,12 +185,44 @@ export abstract class BaseGenerator<
     return '';
   };
 
-  public generate(schema: Schema) {
+  private generateForeignKeys(fks: ForeignKey[]) {
+    for (let i = 0; i < fks.length; i++) {
+      const dbml = new DBML()
+        .insert(`ref ${fks[i].getName()}: `)
+        .escapeSpaces((fks[i].table as unknown as Table)[TableName])
+        .insert('.')
+        .insert(wrapColumns(fks[i].reference().columns))
+        .insert(' > ')
+        .escapeSpaces((fks[i].reference().foreignTable as unknown as Table)[TableName])
+        .insert('.')
+        .insert(wrapColumns(fks[i].reference().foreignColumns));
+
+      const actions: string[] = [];
+      let actionsStr = '';
+
+      if (fks[i].onDelete) {
+        actions.push(`delete: ${fks[i].onDelete}`);
+      }
+
+      if (fks[i].onUpdate) {
+        actions.push(`update: ${fks[i].onUpdate}`);
+      }
+
+      if (actions.length > 0) {
+        actionsStr = ` [${formatList(actions)}]`;
+      }
+
+      dbml.insert(actionsStr);
+      this.generatedRefs.push(dbml.build());
+    }
+  }
+
+  public generate() {
     const generatedEnums: string[] = [];
     const generatedTables: string[] = [];
 
-    for (const key in schema) {
-      const value = schema[key];
+    for (const key in this.schema) {
+      const value = this.schema[key];
 
       if (isPgEnum(value)) {
         generatedEnums.push(this.generateEnum(value));
@@ -175,16 +231,12 @@ export abstract class BaseGenerator<
       }
     }
 
-    const dbml = new DBML();
+    const dbml = new DBML()
+      .concatAll(generatedEnums)
+      .concatAll(generatedTables)
+      .concatAll(this.generatedRefs)
+      .build();
 
-    for (let i = 0; i < generatedEnums.length; i++) {
-      dbml.insert(generatedEnums[i]).newLine(2);
-    }
-
-    for (let i = 0; i < generatedTables.length; i++) {
-      dbml.insert(generatedTables[i]).newLine(2);
-    }
-
-    return dbml.build();
+    return dbml;
   };
 }

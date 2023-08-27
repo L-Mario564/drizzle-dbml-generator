@@ -1,4 +1,3 @@
-import { SQL } from 'drizzle-orm';
 import { DBML } from '~/dbml';
 import { BaseGenerator } from './common';
 import type { BuildQueryConfig } from 'drizzle-orm';
@@ -14,24 +13,6 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
 
   protected override isIncremental(column: AnyPgColumn) {
     return column.getSQLType().includes('serial');
-  }
-
-  protected mapDefaultValue(value: unknown) {
-    let str = '';
-
-    if (typeof value === 'string') {
-      str = `'${value}'`;
-    } else if (typeof value === 'boolean' || typeof value === 'number') {
-      str = `${value}`;
-    } else if (value === null) {
-      str = 'null';
-    } else if (value instanceof SQL) {
-      str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
-    } else {
-      str = `\`${JSON.stringify(value)}\``;
-    }
-
-    return str;
   }
 
   protected override generateEnum(enum_: PgEnum<[string, ...string[]]>) {
@@ -53,6 +34,6 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
   }
 }
 
-export function pgGenerator(schema: PgSchema) {
-  return new PgGenerator().generate(schema);
+export function pgGenerator(schema: PgSchema, relational: boolean = false) {
+  return new PgGenerator(schema, relational).generate();
 }

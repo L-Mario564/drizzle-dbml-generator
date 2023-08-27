@@ -6,6 +6,14 @@ export class DBML {
     return this;
   }
 
+  public concatAll(strs: string[]) {
+    for (let i = 0; i < strs.length; i++) {
+      this.insert(strs[i]);
+      this.newLine(2);
+    }
+    return this;
+  }
+
   /**
    * Escapes characters that aren't allowed in DBML surrounding the input with double quotes
   */
