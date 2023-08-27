@@ -7,6 +7,7 @@ import {
   date,
   doublePrecision,
   foreignKey,
+  index,
   integer,
   interval,
   json,
@@ -101,8 +102,30 @@ function inlineFkTest() {
   expect(compareWith(generated, './pg/inline-fks.dbml')).toBe(true);
 }
 
+function indexesTest() {
+  const table = pgTable('table', {
+    f1: integer('f1'),
+    f2: integer('f2'),
+    f3: integer('f3'),
+    f4: integer('f4')
+  }, (tbl) => ({
+    compositePk: primaryKey(tbl.f1, tbl.f2),
+    unique1: unique('key_1').on(tbl.f1),
+    unique2: unique('key_2').on(tbl.f1, tbl.f2),
+    unique3: uniqueIndex('key_3').on(tbl.f2),
+    index1: index('key_4').on(tbl.f3),
+    index2: index('key_5').on(tbl.f3, tbl.f4),
+    index3: index().on(tbl.f4)
+  }));
+
+  const schema = { table } as unknown as PgSchema;
+  const generated = pgGenerator(schema);
+  expect(compareWith(generated, './pg/indexes.dbml')).toBe(true);
+}
+
 describe('Postgres dialect tests', () => {
   it('Outputs all native types', typesTest);
   it('Outputs all column constraints', constraintsTest);
   it('Outputs an inline foreign key', inlineFkTest);
+  it('Outputs al indexes', indexesTest);
 });

@@ -1,0 +1,16 @@
+table table {
+  f1 integer
+  f2 integer
+  f3 integer
+  f4 integer
+
+  indexes {
+    (f1, f2) [pk]
+    f1 [name: 'key_1', unique]
+    (f1, f2) [name: 'key_2', unique]
+    f2 [name: 'key_3', unique]
+    f3 [name: 'key_4']
+    (f3, f4) [name: 'key_5']
+    f4
+  }
+}

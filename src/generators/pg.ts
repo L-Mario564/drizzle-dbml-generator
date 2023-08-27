@@ -1,6 +1,8 @@
 import { Relations, SQL } from 'drizzle-orm';
-import { InlineForeignKeys, Schema, TableName, isPgEnumSym } from '~/symbols';
+import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName, isPgEnumSym } from '~/symbols';
 import { DBML } from '~/dbml';
+import { Index, PrimaryKey, UniqueConstraint } from 'drizzle-orm/pg-core';
+import { formatList } from '~/utils';
 import type { BuildQueryConfig } from 'drizzle-orm';
 import type { AnyPgColumn, ForeignKey, PgEnum } from 'drizzle-orm/pg-core';
 import type { PgSchema, AnyPgTable } from '~/types';
@@ -64,16 +66,14 @@ function generateColumn(column: AnyPgColumn, fk?: ForeignKey) {
     }
 
     if (actions.length > 0) {
-      const actionsFormatted = actions.reduce((str, action) => `${str}, ${action}`, '').slice(2);
-      actionsStr = `, note: 'actions: [${actionsFormatted}]'`;
+      actionsStr = `, note: 'actions: [${formatList(actions)}]'`;
     }
 
     constraints.push(`${refStr}${actionsStr}`);
   }
 
   if (constraints.length > 0) {
-    const constraintsStr = constraints.reduce((str, constraint) => `${str}, ${constraint}`, '').slice(2);
-    dbml.insert(` [${constraintsStr}]`);
+    dbml.insert(` [${formatList(constraints)}]`);
   }
   
   return dbml.build();
@@ -100,6 +100,56 @@ function generateTable(table: AnyPgTable) {
     const columnDBML = generateColumn(column, inlineFk);
     dbml.insert(columnDBML).newLine();
   }
+
+  if (table[ExtraConfigBuilder]) {
+    const indexes = table[ExtraConfigBuilder](table);
+
+    dbml
+      .newLine()
+      .tab()
+      .insert('indexes {')
+      .newLine();
+
+    for (const indexName in indexes) {
+      const index = indexes[indexName].build(table);
+      dbml.tab(2);
+
+      if (index instanceof Index) {
+        const idxColumns = index.config.columns.length === 1
+          ? index.config.columns[0].name
+          : `(${formatList(index.config.columns.map((column) => column.name))})`;
+        const idxProperties = index.config.name ?
+          ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
+          : '';
+        dbml.insert(`${idxColumns}${idxProperties}`);
+      }
+
+      if (index instanceof PrimaryKey) {
+        const pkColumns = index.columns.length === 1
+          ? index.columns[0].name
+          : `(${formatList(index.columns.map((column) => column.name))})`;
+        dbml.insert(`${pkColumns} [pk]`);
+      }
+
+      if (index instanceof UniqueConstraint) {
+        const uqColumns = index.columns.length === 1
+          ? index.columns[0].name
+          : `(${formatList(index.columns.map((column) => column.name))})`;
+        const uqProperties = index.name
+          ? `[name: '${index.name}', unique]`
+          : '[unique]';
+        dbml.insert(`${uqColumns} ${uqProperties}`);
+      }
+  
+      dbml.newLine();
+    }
+
+    dbml
+      .tab()
+      .insert('}')
+      .newLine();
+  }
+
   
   dbml.insert('}');
   return dbml.build();
