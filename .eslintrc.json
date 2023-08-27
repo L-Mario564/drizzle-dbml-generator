@@ -25,6 +25,14 @@
     "default-case": "error",
     "prefer-const": "warn",
     "@typescript-eslint/no-inferrable-types": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "quote-props": ["warn", "consistent"]
   },
   "ignorePatterns": ["node_modules", "dist", "*.d.ts"]
