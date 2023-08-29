@@ -1,6 +1,6 @@
-import { formatList, wrapColumns } from '~/utils';
+import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
-import { Relations, SQL } from 'drizzle-orm';
+import { One, Relations, SQL, createMany, createOne } from 'drizzle-orm';
 import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName } from '~/symbols';
 import { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint, isPgEnum } from 'drizzle-orm/pg-core';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
@@ -132,7 +132,10 @@ export abstract class BaseGenerator<
       .values(table[ExtraConfigBuilder]?.(table) || {})
       .map((b: AnyBuilder) => b.build(table));
     const fks = builtIndexes.filter((index) => index instanceof ForeignKey) as unknown as ForeignKey[];
-    this.generateForeignKeys(fks);
+
+    if (!this.relational) {
+      this.generateForeignKeys(fks);
+    }
 
     if (extraConfig && builtIndexes.length > fks.length) {
       const indexes = extraConfig(table);
@@ -217,9 +220,78 @@ export abstract class BaseGenerator<
     }
   }
 
+  private generateRelations(relations_: Relations[]) {
+    const left: Record<string, {
+      type: 'one' | 'many';
+      sourceTable?: string;
+      sourceColumns?: string[];
+      foreignTable?: string;
+      foreignColumns?: string[];
+    }> = {};
+    const right: typeof left = {};
+
+    for (let i = 0; i < relations_.length; i++) {
+      const relations = relations_[i].config({
+        one: createOne(relations_[i].table),
+        many: createMany(relations_[i].table)
+      });
+
+      for (const relationName in relations) {
+        const relation = relations[relationName];
+        const tableNames: string[] = [
+          (relations_[i].table as unknown as Table)[TableName],
+          relation.referencedTableName
+        ].sort();
+        const key = `${tableNames[0]}-${tableNames[1]}${(
+          relation.relationName ? `-${relation.relationName}` : ''
+        )}`;
+
+        if (relation instanceof One && relation.config?.references.length || 0 > 0) {
+          left[key] = {
+            type: 'one',
+            sourceTable: (relation.sourceTable as unknown as Table)[TableName],
+            sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
+            foreignTable: relation.referencedTableName,
+            foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
+          };
+        } else {
+          right[key] = {
+            type: relation instanceof One ? 'one' : 'many'
+          };
+        }
+      }
+    }
+
+    for (const key in left) {
+      const sourceTable = left[key].sourceTable || '';
+      const foreignTable = left[key].foreignTable || ''
+      const sourceColumns = left[key].sourceColumns || [];
+      const foreignColumns = left[key].foreignColumns || [];
+      const relationType = right[key]?.type || 'one';
+
+      if (sourceColumns.length === 0 || foreignColumns.length === 0) {
+        throw Error(`Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`);
+      }
+
+      const dbml = new DBML()
+        .insert('ref: ')
+        .escapeSpaces(sourceTable)
+        .insert('.')
+        .insert(wrapColumnNames(sourceColumns))
+        .insert(` ${relationType === 'one' ? '-' : '>'} `)
+        .escapeSpaces(foreignTable)
+        .insert('.')
+        .insert(wrapColumnNames(foreignColumns))
+        .build();
+
+      this.generatedRefs.push(dbml);
+    }
+  }
+
   public generate() {
     const generatedEnums: string[] = [];
     const generatedTables: string[] = [];
+    const relations: Relations[] = [];
 
     for (const key in this.schema) {
       const value = this.schema[key];
@@ -228,8 +300,12 @@ export abstract class BaseGenerator<
         generatedEnums.push(this.generateEnum(value));
       } else if (!(value instanceof Relations)) {
         generatedTables.push(this.generateTable(value as unknown as Table));
+      } else {
+        relations.push(value);
       }
     }
+
+    this.generateRelations(relations);
 
     const dbml = new DBML()
       .concatAll(generatedEnums)

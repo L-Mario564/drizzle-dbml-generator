@@ -30,6 +30,7 @@ import {
 import { compareWith } from '../utils';
 import { pgGenerator } from '~/generators';
 import { PgSchema } from '~/types';
+import { relations } from 'drizzle-orm';
 
 function typesTest() {
   const myEnum = pgEnum('my_enum', ['value_1', 'value_2', 'value_3']);
@@ -106,7 +107,7 @@ function fkTest() {
   const users = pgTable('users', {
     id: serial('id').primaryKey(),
     registeredAt: timestamp('registered_at'),
-    username: text('username'),
+    username: text('username')
   });
   const posts = pgTable('posts', {
     id: serial('id').primaryKey(),
@@ -145,10 +146,58 @@ function indexesTest() {
   expect(compareWith(generated, './pg/indexes.dbml')).toBe(true);
 }
 
+function rqbTest() {
+  const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    configId: integer('config_id').references(() => userConfig.id, {
+      onDelete: 'set null'
+    })
+  });
+  const usersRelations = relations(users, ({ one, many }) => ({
+    userConfig: one(userConfig, {
+      fields: [users.configId],
+      references: [userConfig.id]
+    }),
+    sells: many(items)
+  }));
+
+  const userConfig = pgTable('user_config', {
+    id: serial('id').primaryKey()
+  });
+  const userConfigRelations = relations(userConfig, ({ one }) => ({
+    user: one(users)
+  }));
+
+  const items = pgTable('items', {
+    id: serial('id').primaryKey(),
+    soldById: integer('sold_by_id').notNull().references(() => users.id, {
+      onDelete: 'cascade'
+    })
+  });
+  const itemsRelations = relations(items, ({ one }) => ({
+    soldBy: one(users, {
+      fields: [items.soldById],
+      references: [users.id]
+    })
+  }));
+
+  const schema = {
+    users,
+    usersRelations,
+    userConfig,
+    userConfigRelations,
+    items,
+    itemsRelations
+  } as unknown as PgSchema;
+  const generated = pgGenerator(schema, true);
+  expect(compareWith(generated, './pg/relations.dbml')).toBe(true);
+}
+
 describe('Postgres dialect tests', () => {
   it('Outputs all native types', typesTest);
   it('Outputs all column constraints', constraintsTest);
   it('Outputs an inline foreign key', inlineFkTest);
   it('Outputs a foreign key', fkTest);
   it('Outputs all indexes', indexesTest);
+  it('Outputs relations written with the RQB API', rqbTest);
 });

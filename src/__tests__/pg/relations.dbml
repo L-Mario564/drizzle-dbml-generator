@@ -1,0 +1,17 @@
+table users {
+  id serial [pk, not null, increment]
+  config_id integer
+}
+
+table user_config {
+  id serial [pk, not null, increment]
+}
+
+table items {
+  id serial [pk, not null, increment]
+  sold_by_id integer [not null]
+}
+
+ref: users.config_id - user_config.id
+
+ref: items.sold_by_id > users.id
