@@ -1,0 +1,42 @@
+table users {
+  id serial [pk, not null, increment]
+  registered_at timestamp [not null, default: `now()`]
+  username varchar(16) [not null, unique]
+  bio text
+  has_blue boolean [not null, default: false]
+}
+
+table followers {
+  user_id integer [not null]
+  follows_user_id integer [not null]
+
+  indexes {
+    (user_id, follows_user_id) [pk]
+  }
+}
+
+table tweets {
+  id serial [pk, not null, increment]
+  posted_at timestamp [not null, default: `now()`]
+  content text [not null]
+  posted_by_id integer [not null]
+}
+
+table likes {
+  liked_tweet_id integer [not null]
+  liked_by_id integer [not null]
+
+  indexes {
+    (liked_by_id, liked_tweet_id) [pk]
+  }
+}
+
+ref followers_user_id_users_id_fk: followers.user_id > users.id [delete: no action, update: no action]
+
+ref followers_follows_user_id_users_id_fk: followers.follows_user_id > users.id [delete: no action, update: no action]
+
+ref tweets_posted_by_id_users_id_fk: tweets.posted_by_id > users.id [delete: no action, update: no action]
+
+ref likes_liked_tweet_id_tweets_id_fk: likes.liked_tweet_id > tweets.id [delete: no action, update: no action]
+
+ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no action, update: no action]

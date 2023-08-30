@@ -8,9 +8,9 @@ table my_table {
   integer integer
   smallint smallint
   bigint bigint
-  serial serial
-  smallserial smallserial
-  bigserial bigserial
+  serial serial [not null, increment]
+  smallserial serial [not null, increment]
+  bigserial bigserial [increment]
   boolean boolean
   text text
   varchar varchar

@@ -71,32 +71,9 @@ export abstract class BaseGenerator<
       constraints.push('increment');
     }
 
-    if (column.default) {
+    if (column.default !== undefined) {
       constraints.push(`default: ${this.mapDefaultValue(column.default)}`);
     }
-
-    // if (fk) {
-    //   const foreignColumn = fk.reference().foreignColumns[0];
-    //   const foreignTable = foreignColumn.table as unknown as Table;
-    //   const schema = foreignTable[Schema] ? `${foreignTable[Schema]}.` : '';
-    //   const refStr = `ref: > ${schema}${foreignTable[TableName]}.${foreignColumn.name}`;
-    //   const actions: string[] = [];
-    //   let actionsStr = '';
-
-    //   if (fk.onDelete) {
-    //     actions.push(`delete: ${fk.onDelete}`);
-    //   }
-
-    //   if (fk.onUpdate) {
-    //     actions.push(`update: ${fk.onUpdate}`);
-    //   }
-
-    //   if (actions.length > 0) {
-    //     actionsStr = `, note: 'actions: [${formatList(actions)}]'`;
-    //   }
-
-    //   constraints.push(`${refStr}${actionsStr}`);
-    // }
 
     if (constraints.length > 0) {
       dbml.insert(` [${formatList(constraints)}]`);
@@ -264,7 +241,7 @@ export abstract class BaseGenerator<
 
     for (const key in left) {
       const sourceTable = left[key].sourceTable || '';
-      const foreignTable = left[key].foreignTable || ''
+      const foreignTable = left[key].foreignTable || '';
       const sourceColumns = left[key].sourceColumns || [];
       const foreignColumns = left[key].foreignColumns || [];
       const relationType = right[key]?.type || 'one';
@@ -305,7 +282,9 @@ export abstract class BaseGenerator<
       }
     }
 
-    this.generateRelations(relations);
+    if (this.relational) {
+      this.generateRelations(relations);
+    }
 
     const dbml = new DBML()
       .concatAll(generatedEnums)
