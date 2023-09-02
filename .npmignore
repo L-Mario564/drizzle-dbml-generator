@@ -1,0 +1,12 @@
+.github
+.vscode
+node_modules
+src
+.eslintrc.json
+.gitignore
+.npmignore
+.prettierignore
+.prettierrc.json
+pnpm-lock.yaml
+tsconfig.json
+vitest.config.js
