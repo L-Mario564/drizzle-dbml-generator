@@ -2,7 +2,14 @@ import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
 import { One, Relations, SQL, createMany, createOne } from 'drizzle-orm';
 import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName } from '~/symbols';
-import { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint, isPgEnum } from 'drizzle-orm/pg-core';
+import {
+  ForeignKey,
+  Index,
+  PgEnum,
+  PrimaryKey,
+  UniqueConstraint,
+  isPgEnum
+} from 'drizzle-orm/pg-core';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
@@ -88,16 +95,13 @@ export abstract class BaseGenerator<
     }
 
     const dbml = new DBML().insert('table ');
-  
+
     if (table[Schema]) {
       dbml.escapeSpaces(table[Schema]).insert('.');
     }
-  
-    dbml
-      .escapeSpaces(table[TableName])
-      .insert(' {')
-      .newLine();
-  
+
+    dbml.escapeSpaces(table[TableName]).insert(' {').newLine();
+
     for (const columnName in table) {
       const column = table[columnName] as unknown as Column;
       const columnDBML = this.generateColumn(column);
@@ -105,10 +109,12 @@ export abstract class BaseGenerator<
     }
 
     const extraConfig = table[ExtraConfigBuilder];
-    const builtIndexes = Object
-      .values(table[ExtraConfigBuilder]?.(table) || {})
-      .map((b: AnyBuilder) => b.build(table));
-    const fks = builtIndexes.filter((index) => index instanceof ForeignKey) as unknown as ForeignKey[];
+    const builtIndexes = Object.values(table[ExtraConfigBuilder]?.(table) || {}).map(
+      (b: AnyBuilder) => b.build(table)
+    );
+    const fks = builtIndexes.filter(
+      (index) => index instanceof ForeignKey
+    ) as unknown as ForeignKey[];
 
     if (!this.relational) {
       this.generateForeignKeys(fks);
@@ -116,54 +122,45 @@ export abstract class BaseGenerator<
 
     if (extraConfig && builtIndexes.length > fks.length) {
       const indexes = extraConfig(table);
-  
-      dbml
-        .newLine()
-        .tab()
-        .insert('indexes {')
-        .newLine();
-  
+
+      dbml.newLine().tab().insert('indexes {').newLine();
+
       for (const indexName in indexes) {
         const index = indexes[indexName].build(table);
         dbml.tab(2);
-  
+
         if (index instanceof Index) {
           const idxColumns = wrapColumns(index.config.columns);
-          const idxProperties = index.config.name ?
-            ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
+          const idxProperties = index.config.name
+            ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
             : '';
           dbml.insert(`${idxColumns}${idxProperties}`);
         }
-  
+
         if (index instanceof PrimaryKey) {
           const pkColumns = wrapColumns(index.columns);
           dbml.insert(`${pkColumns} [pk]`);
         }
-  
+
         if (index instanceof UniqueConstraint) {
           const uqColumns = wrapColumns(index.columns);
-          const uqProperties = index.name
-            ? `[name: '${index.name}', unique]`
-            : '[unique]';
+          const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
           dbml.insert(`${uqColumns} ${uqProperties}`);
         }
-    
+
         dbml.newLine();
       }
-  
-      dbml
-        .tab()
-        .insert('}')
-        .newLine();
+
+      dbml.tab().insert('}').newLine();
     }
-    
+
     dbml.insert('}');
     return dbml.build();
   }
 
   protected generateEnum(_enum_: PgEnum<[string, ...string[]]>) {
     return '';
-  };
+  }
 
   private generateForeignKeys(fks: ForeignKey[]) {
     for (let i = 0; i < fks.length; i++) {
@@ -198,13 +195,16 @@ export abstract class BaseGenerator<
   }
 
   private generateRelations(relations_: Relations[]) {
-    const left: Record<string, {
-      type: 'one' | 'many';
-      sourceTable?: string;
-      sourceColumns?: string[];
-      foreignTable?: string;
-      foreignColumns?: string[];
-    }> = {};
+    const left: Record<
+      string,
+      {
+        type: 'one' | 'many';
+        sourceTable?: string;
+        sourceColumns?: string[];
+        foreignTable?: string;
+        foreignColumns?: string[];
+      }
+    > = {};
     const right: typeof left = {};
 
     for (let i = 0; i < relations_.length; i++) {
@@ -219,11 +219,11 @@ export abstract class BaseGenerator<
           (relations_[i].table as unknown as Table)[TableName],
           relation.referencedTableName
         ].sort();
-        const key = `${tableNames[0]}-${tableNames[1]}${(
+        const key = `${tableNames[0]}-${tableNames[1]}${
           relation.relationName ? `-${relation.relationName}` : ''
-        )}`;
+        }`;
 
-        if (relation instanceof One && relation.config?.references.length || 0 > 0) {
+        if ((relation instanceof One && relation.config?.references.length) || 0 > 0) {
           left[key] = {
             type: 'one',
             sourceTable: (relation.sourceTable as unknown as Table)[TableName],
@@ -247,7 +247,9 @@ export abstract class BaseGenerator<
       const relationType = right[key]?.type || 'one';
 
       if (sourceColumns.length === 0 || foreignColumns.length === 0) {
-        throw Error(`Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`);
+        throw Error(
+          `Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`
+        );
       }
 
       const dbml = new DBML()
@@ -293,5 +295,5 @@ export abstract class BaseGenerator<
       .build();
 
     return dbml;
-  };
+  }
 }

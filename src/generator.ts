@@ -11,7 +11,9 @@ export async function generator() {
   }
 
   if (!schemaPath.endsWith('.js') || !schemaPath.endsWith('.ts')) {
-    throw new Error(`File located at "${schemaPath}" isn't a Javascript (.js) or Typescript (.ts) file`);
+    throw new Error(
+      `File located at "${schemaPath}" isn't a Javascript (.js) or Typescript (.ts) file`
+    );
   }
 
   const schema = await import(schemaPath);

@@ -9,13 +9,15 @@ export type AnyTable = DrizzleAnyTable['_']['columns'] & {
   [InlineForeignKeys]: ForeignKey[];
   [TableName]: string;
   [Schema]: string | undefined;
-  [ExtraConfigBuilder]: ((self: Record<string, AnyColumn>) => Record<string, AnyBuilder>) | undefined;
-}
+  [ExtraConfigBuilder]:
+    | ((self: Record<string, AnyColumn>) => Record<string, AnyBuilder>)
+    | undefined;
+};
 
 type Schema<DialectTypes> = Record<string, DialectTypes | Relations>;
 export type AnySchema = Schema<AnyTable | PgEnum<[string, ...string[]]>>;
 export type AnyBuilder = {
-  build: (table: AnyTable) => UniqueConstraint | PrimaryKey | ForeignKey | Index
+  build: (table: AnyTable) => UniqueConstraint | PrimaryKey | ForeignKey | Index;
 };
 
 export type PgSchema = Schema<AnyTable | PgEnum<[string, ...string[]]>>;

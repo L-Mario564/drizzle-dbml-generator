@@ -29,7 +29,6 @@ export function getCliOptions() {
     );
   }
 
-
   return {
     schema,
     dialect,

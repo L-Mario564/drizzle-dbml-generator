@@ -16,7 +16,7 @@ export class DBML {
 
   /**
    * Escapes characters that aren't allowed in DBML surrounding the input with double quotes
-  */
+   */
   public escapeSpaces(str: string) {
     this.built += str.includes(' ') ? `"${str}"` : str;
     return this;

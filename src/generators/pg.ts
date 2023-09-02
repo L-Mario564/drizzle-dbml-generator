@@ -16,19 +16,12 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
   }
 
   protected override generateEnum(enum_: PgEnum<[string, ...string[]]>) {
-    const dbml = new DBML()
-      .insert('enum ')
-      .escapeSpaces(enum_.enumName)
-      .insert(' {')
-      .newLine();
-    
+    const dbml = new DBML().insert('enum ').escapeSpaces(enum_.enumName).insert(' {').newLine();
+
     for (let i = 0; i < enum_.enumValues.length; i++) {
-      dbml
-        .tab()
-        .escapeSpaces(enum_.enumValues[i])
-        .newLine();
+      dbml.tab().escapeSpaces(enum_.enumValues[i]).newLine();
     }
-  
+
     dbml.insert('}');
     return dbml.build();
   }
