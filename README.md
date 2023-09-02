@@ -121,9 +121,7 @@ export const likesRelations = relations(likes, ({ one }) => ({
 import * as schema from './schema';
 import { pgGenerate } from 'drizzle-dbml-generator'; // Using Postgres for this example
 
-// Uses the current working directory as the root
 const out = './schema.dbml';
-// If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys
 const relational = true;
 
 pgGenerate({ schema, out, relational });
