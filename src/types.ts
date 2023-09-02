@@ -11,11 +11,20 @@ export type AnyTable = DrizzleAnyTable['_']['columns'] & {
     | undefined;
 };
 
-type Schema<DialectTypes = NonNullable<unknown>> = Record<string, DialectTypes | Relations | AnyTable | DrizzleAnyTable>;
+type Schema<DialectTypes = NonNullable<unknown>> = Record<
+  string,
+  DialectTypes | Relations | AnyTable | DrizzleAnyTable
+>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnySchema = Schema<PgEnum<any>>;
 export type AnyBuilder = {
   build: (table: AnyTable) => UniqueConstraint | PrimaryKey | ForeignKey | Index;
 };
 
-export type PgSchema = Schema<PgEnum<[string, ...string[]]>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PgSchema = Schema<PgEnum<any>>;
+export type Options<Schema> = {
+  schema: Schema;
+  out: string;
+  relational?: boolean;
+};

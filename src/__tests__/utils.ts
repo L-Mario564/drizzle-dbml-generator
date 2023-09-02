@@ -1,9 +1,16 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { definePath } from '~/utils';
+import { readFile } from 'fs/promises';
+import { resolve } from 'path';
 
-export function compareWith(generated: string, pathToExpected: string) {
-  const path = definePath('__tests__', pathToExpected);
-  writeFileSync(path.replace('.dbml', '.generated.dbml'), generated, { encoding: 'utf-8' });
-  const expected = readFileSync(path, { encoding: 'utf-8' }).replace(/[\r\n]+/gm, ' ');
-  return generated.replace(/[\r\n]+/gm, ' ') === expected;
+function standardizeLineBreaks(str: string) {
+  return str.replace(/[\r\n]+/gm, ' ');
+}
+
+export async function compareContents(pathToGenerated: string) {
+  pathToGenerated = resolve(process.cwd(), pathToGenerated);
+  const pathToExpected = pathToGenerated.replace('.generated', '');
+
+  const generatedPromise = readFile(pathToGenerated, { encoding: 'utf-8' });
+  const expectedPromise = readFile(pathToExpected, { encoding: 'utf-8' });
+  const [generated, expected] = await Promise.all([generatedPromise, expectedPromise]);
+  return standardizeLineBreaks(generated) === standardizeLineBreaks(expected);
 }

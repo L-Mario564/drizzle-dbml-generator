@@ -2,3 +2,4 @@ node_modules
 dist
 LICENSE
 *.dbml
+pnpm-lock.yaml

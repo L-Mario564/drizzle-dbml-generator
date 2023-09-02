@@ -27,11 +27,13 @@ import {
   uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core';
-import { compareWith } from '../utils';
-import { pgGenerator } from '~/generators';
+import { compareContents } from '../utils';
+import { pgGenerate } from '~/generators';
 import { relations } from 'drizzle-orm';
 
-function typesTest() {
+const pathPrefix = './src/__tests__/pg/';
+
+async function typesTest() {
   const myEnum = pgEnum('my_enum', ['value_1', 'value_2', 'value_3']);
 
   const myTable = pgTable('my_table', {
@@ -62,12 +64,16 @@ function typesTest() {
     intArr: integer('int_arr').array(),
     int2dArr: integer('int_2d_arr').array(3).array()
   });
+
   const schema = { myEnum, myTable };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/types.dbml')).toBe(true);
+  const out = `${pathPrefix}types.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function constraintsTest() {
+async function constraintsTest() {
   const myTable = pgTable('my_table', {
     pk: integer('pk').primaryKey(),
     nn: integer('nn').notNull(),
@@ -81,11 +87,14 @@ function constraintsTest() {
   });
 
   const schema = { myTable };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/constraints.dbml')).toBe(true);
+  const out = `${pathPrefix}constraints.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function inlineFkTest() {
+async function inlineFkTest() {
   const users = pgTable('users', {
     id: serial('id').primaryKey()
   });
@@ -100,11 +109,14 @@ function inlineFkTest() {
   });
 
   const schema = { users, posts };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/inline-fk.dbml')).toBe(true);
+  const out = `${pathPrefix}inline-fk.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function fkTest() {
+async function fkTest() {
   const users = pgTable('users', {
     id: serial('id').primaryKey(),
     registeredAt: timestamp('registered_at'),
@@ -126,11 +138,14 @@ function fkTest() {
   );
 
   const schema = { users, posts };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/fk.dbml')).toBe(true);
+  const out = `${pathPrefix}fk.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function indexesTest() {
+async function indexesTest() {
   const table = pgTable(
     'table',
     {
@@ -151,11 +166,14 @@ function indexesTest() {
   );
 
   const schema = { table };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/indexes.dbml')).toBe(true);
+  const out = `${pathPrefix}indexes.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function rqbTest() {
+async function rqbTest() {
   const users = pgTable('users', {
     id: serial('id').primaryKey(),
     configId: integer('config_id').references(() => userConfig.id, {
@@ -200,11 +218,15 @@ function rqbTest() {
     items,
     itemsRelations
   };
-  const generated = pgGenerator(schema, true);
-  expect(compareWith(generated, './pg/relations.dbml')).toBe(true);
+  const out = `${pathPrefix}relations.generated.dbml`;
+  const relational = true;
+  pgGenerate({ schema, out, relational });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
-function realTest() {
+async function realTest() {
   const users = pgTable('users', {
     id: serial('id').primaryKey(),
     registeredAt: timestamp('registered_at').notNull().defaultNow(),
@@ -300,8 +322,11 @@ function realTest() {
     likes,
     likesRelations
   };
-  const generated = pgGenerator(schema);
-  expect(compareWith(generated, './pg/real.dbml')).toBe(true);
+  const out = `${pathPrefix}real.generated.dbml`;
+  pgGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
 }
 
 describe('Postgres dialect tests', () => {

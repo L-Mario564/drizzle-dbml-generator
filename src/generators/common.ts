@@ -10,6 +10,8 @@ import {
   UniqueConstraint,
   isPgEnum
 } from 'drizzle-orm/pg-core';
+import { writeFileSync } from 'fs';
+import { resolve } from 'path';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
@@ -295,5 +297,16 @@ export abstract class BaseGenerator<
       .build();
 
     return dbml;
+  }
+}
+
+export function writeDBMLFile(dbml: string, outPath: string) {
+  const path = resolve(process.cwd(), outPath);
+
+  try {
+    writeFileSync(path, dbml, { encoding: 'utf-8' });
+  } catch (err) {
+    console.error('An error ocurred while writing the generated DBML');
+    throw err;
   }
 }
