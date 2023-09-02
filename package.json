@@ -12,6 +12,10 @@
     "lint": "npx eslint . && npx tsc --noEmit",
     "test:pg": "npx vitest run --dir src/__tests__"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/L-Mario564/drizzle-dbml-generator.git"
+  },
   "keywords": [
     "drizzle-orm",
     "dbml",
