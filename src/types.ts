@@ -1,8 +1,5 @@
-import type { getCliOptions } from '~/utils';
 import type { AnyColumn, AnyTable as DrizzleAnyTable, Relations } from 'drizzle-orm';
 import type { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint } from 'drizzle-orm/pg-core';
-// import type { MySqlTable } from 'drizzle-orm/mysql-core';
-// import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { InlineForeignKeys, TableName, Schema, ExtraConfigBuilder } from './symbols';
 
 export type AnyTable = DrizzleAnyTable['_']['columns'] & {
@@ -14,13 +11,11 @@ export type AnyTable = DrizzleAnyTable['_']['columns'] & {
     | undefined;
 };
 
-type Schema<DialectTypes> = Record<string, DialectTypes | Relations>;
-export type AnySchema = Schema<AnyTable | PgEnum<[string, ...string[]]>>;
+type Schema<DialectTypes = NonNullable<unknown>> = Record<string, DialectTypes | Relations | AnyTable | DrizzleAnyTable>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnySchema = Schema<PgEnum<any>>;
 export type AnyBuilder = {
   build: (table: AnyTable) => UniqueConstraint | PrimaryKey | ForeignKey | Index;
 };
 
-export type PgSchema = Schema<AnyTable | PgEnum<[string, ...string[]]>>;
-// export type MySqlSchema = Schema<MySqlTable>;
-// export type SQLiteSchema = Schema<SQLiteTable>;
-export type Options = ReturnType<typeof getCliOptions>;
+export type PgSchema = Schema<PgEnum<[string, ...string[]]>>;

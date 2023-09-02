@@ -2,7 +2,7 @@ import { DBML } from '~/dbml';
 import { BaseGenerator } from './common';
 import type { BuildQueryConfig } from 'drizzle-orm';
 import type { AnyPgColumn, PgEnum } from 'drizzle-orm/pg-core';
-import type { PgSchema, AnyTable } from '~/types';
+import type { PgSchema, AnySchema, AnyTable } from '~/types';
 
 class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
   protected override buildQueryConfig: BuildQueryConfig = {
@@ -27,6 +27,6 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
   }
 }
 
-export function pgGenerator(schema: PgSchema, relational: boolean = false) {
+export function pgGenerator(schema: AnySchema, relational: boolean = false) {
   return new PgGenerator(schema, relational).generate();
 }

@@ -29,7 +29,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { compareWith } from '../utils';
 import { pgGenerator } from '~/generators';
-import { PgSchema } from '~/types';
 import { relations } from 'drizzle-orm';
 
 function typesTest() {
@@ -63,7 +62,7 @@ function typesTest() {
     intArr: integer('int_arr').array(),
     int2dArr: integer('int_2d_arr').array(3).array()
   });
-  const schema = { myEnum, myTable } as unknown as PgSchema;
+  const schema = { myEnum, myTable };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/types.dbml')).toBe(true);
 }
@@ -81,7 +80,7 @@ function constraintsTest() {
     multiple: text('multiple').notNull().default('other text')
   });
 
-  const schema = { myTable } as unknown as PgSchema;
+  const schema = { myTable };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/constraints.dbml')).toBe(true);
 }
@@ -100,7 +99,7 @@ function inlineFkTest() {
       })
   });
 
-  const schema = { users, posts } as unknown as PgSchema;
+  const schema = { users, posts };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/inline-fk.dbml')).toBe(true);
 }
@@ -126,7 +125,7 @@ function fkTest() {
     })
   );
 
-  const schema = { users, posts } as unknown as PgSchema;
+  const schema = { users, posts };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/fk.dbml')).toBe(true);
 }
@@ -151,7 +150,7 @@ function indexesTest() {
     })
   );
 
-  const schema = { table } as unknown as PgSchema;
+  const schema = { table };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/indexes.dbml')).toBe(true);
 }
@@ -200,7 +199,7 @@ function rqbTest() {
     userConfigRelations,
     items,
     itemsRelations
-  } as unknown as PgSchema;
+  };
   const generated = pgGenerator(schema, true);
   expect(compareWith(generated, './pg/relations.dbml')).toBe(true);
 }
@@ -300,7 +299,7 @@ function realTest() {
     tweetsRelations,
     likes,
     likesRelations
-  } as unknown as PgSchema;
+  };
   const generated = pgGenerator(schema);
   expect(compareWith(generated, './pg/real.dbml')).toBe(true);
 }
