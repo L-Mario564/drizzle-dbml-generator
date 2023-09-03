@@ -22,6 +22,11 @@ export class DBML {
     return this;
   }
 
+  public escapeType(str: string) {
+    this.built += str.includes(' ') || str.includes(')[') ? `"${str}"` : str;
+    return this;
+  }
+
   public newLine(newLines: number = 1) {
     this.built += '\n'.repeat(newLines);
     return this;

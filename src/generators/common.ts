@@ -1,6 +1,6 @@
 import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
-import { One, Relations, SQL, createMany, createOne } from 'drizzle-orm';
+import { One, Relations, SQL, createMany, createOne, is, isTable } from 'drizzle-orm';
 import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName } from '~/symbols';
 import {
   ForeignKey,
@@ -47,7 +47,7 @@ export abstract class BaseGenerator<
       str = `${value}`;
     } else if (value === null) {
       str = 'null';
-    } else if (value instanceof SQL) {
+    } else if (is(value, SQL)) {
       str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
     } else {
       str = `\`${JSON.stringify(value)}\``;
@@ -61,7 +61,7 @@ export abstract class BaseGenerator<
       .tab()
       .escapeSpaces(column.name)
       .insert(' ')
-      .escapeSpaces(column.getSQLType());
+      .escapeType(column.getSQLType());
     const constraints: string[] = [];
 
     if (column.primary) {
@@ -115,7 +115,7 @@ export abstract class BaseGenerator<
       (b: AnyBuilder) => b.build(table)
     );
     const fks = builtIndexes.filter(
-      (index) => index instanceof ForeignKey
+      (index) => is(index, ForeignKey)
     ) as unknown as ForeignKey[];
 
     if (!this.relational) {
@@ -131,7 +131,7 @@ export abstract class BaseGenerator<
         const index = indexes[indexName].build(table);
         dbml.tab(2);
 
-        if (index instanceof Index) {
+        if (is(index, Index)) {
           const idxColumns = wrapColumns(index.config.columns);
           const idxProperties = index.config.name
             ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
@@ -139,12 +139,12 @@ export abstract class BaseGenerator<
           dbml.insert(`${idxColumns}${idxProperties}`);
         }
 
-        if (index instanceof PrimaryKey) {
+        if (is(index, PrimaryKey)) {
           const pkColumns = wrapColumns(index.columns);
           dbml.insert(`${pkColumns} [pk]`);
         }
 
-        if (index instanceof UniqueConstraint) {
+        if (is(index, UniqueConstraint)) {
           const uqColumns = wrapColumns(index.columns);
           const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
           dbml.insert(`${uqColumns} ${uqProperties}`);
@@ -279,9 +279,9 @@ export abstract class BaseGenerator<
 
       if (isPgEnum(value)) {
         generatedEnums.push(this.generateEnum(value));
-      } else if (!(value instanceof Relations)) {
+      } else if (isTable(value)) {
         generatedTables.push(this.generateTable(value as unknown as Table));
-      } else {
+      } else if (value instanceof Relations) {
         relations.push(value);
       }
     }
