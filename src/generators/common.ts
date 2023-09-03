@@ -225,7 +225,7 @@ export abstract class BaseGenerator<
           relation.relationName ? `-${relation.relationName}` : ''
         }`;
 
-        if ((relation instanceof One && relation.config?.references.length) || 0 > 0) {
+        if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
           left[key] = {
             type: 'one',
             sourceTable: (relation.sourceTable as unknown as Table)[TableName],
@@ -235,7 +235,7 @@ export abstract class BaseGenerator<
           };
         } else {
           right[key] = {
-            type: relation instanceof One ? 'one' : 'many'
+            type: is(relation, One) ? 'one' : 'many'
           };
         }
       }
@@ -281,7 +281,7 @@ export abstract class BaseGenerator<
         generatedEnums.push(this.generateEnum(value));
       } else if (isTable(value)) {
         generatedTables.push(this.generateTable(value as unknown as Table));
-      } else if (value instanceof Relations) {
+      } else if (is(value, Relations)) {
         relations.push(value);
       }
     }
