@@ -1,0 +1,23 @@
+table my_table {
+  int int
+  tinyint tinyint
+  smallint smallint
+  mediumint mediumint
+  bigint bigint
+  real real
+  decimal decimal
+  double double
+  float float
+  serial serial [increment]
+  binary binary
+  varbinary varbinary(2)
+  char char
+  varchar varchar(128)
+  text text
+  boolean boolean
+  datetime datetime
+  time time
+  year year
+  timestamp timestamp
+  enum enum('one','two','three')
+}

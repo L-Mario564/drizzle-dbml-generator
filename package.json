@@ -10,7 +10,8 @@
     "build": "npx tsup src/index.ts --format cjs,esm --dts",
     "fmt": "npx prettier --write .",
     "lint": "npx eslint . && npx tsc --noEmit",
-    "test:pg": "npx vitest run --dir src/__tests__"
+    "test:pg": "npx vitest run --dir src/__tests__/pg",
+    "test:mysql": "npx vitest run --dir src/__tests__/mysql"
   },
   "repository": {
     "type": "git",

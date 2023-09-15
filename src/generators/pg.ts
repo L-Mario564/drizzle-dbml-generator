@@ -1,10 +1,12 @@
 import { DBML } from '~/dbml';
 import { BaseGenerator, writeDBMLFile } from './common';
+import { PgInlineForeignKeys } from '~/symbols';
 import type { BuildQueryConfig } from 'drizzle-orm';
 import type { AnyPgColumn, PgEnum } from 'drizzle-orm/pg-core';
-import type { PgSchema, AnyTable, Options } from '~/types';
+import type { PgSchema, Options } from '~/types';
 
-class PgGenerator extends BaseGenerator<PgSchema, AnyTable, AnyPgColumn> {
+class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
+  protected override InlineForeignKeys: typeof PgInlineForeignKeys = PgInlineForeignKeys;
   protected override buildQueryConfig: BuildQueryConfig = {
     escapeName: (name) => `"${name}"`,
     escapeParam: (num) => `$${num + 1}`,

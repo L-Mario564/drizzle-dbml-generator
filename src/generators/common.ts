@@ -1,7 +1,7 @@
 import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
 import { One, Relations, SQL, createMany, createOne, is, isTable } from 'drizzle-orm';
-import { ExtraConfigBuilder, InlineForeignKeys, Schema, TableName } from '~/symbols';
+import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
 import {
   ForeignKey,
   Index,
@@ -12,17 +12,18 @@ import {
 } from 'drizzle-orm/pg-core';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
+import type { PgInlineForeignKeys, MySqlInlineForeignKeys } from '~/symbols';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
 export abstract class BaseGenerator<
   Schema extends AnySchema = AnySchema,
-  Table extends AnyTable = AnyTable,
   Column extends AnyColumn = AnyColumn
 > {
   private readonly schema: Schema;
   private readonly relational: boolean;
   private generatedRefs: string[] = [];
+  protected InlineForeignKeys: typeof AnyInlineForeignKeys | typeof PgInlineForeignKeys | typeof MySqlInlineForeignKeys = AnyInlineForeignKeys;
   protected buildQueryConfig: BuildQueryConfig = {
     escapeName: () => '',
     escapeParam: () => '',
@@ -91,9 +92,9 @@ export abstract class BaseGenerator<
     return dbml.build();
   }
 
-  protected generateTable(table: Table) {
+  protected generateTable(table: AnyTable) {
     if (!this.relational) {
-      this.generateForeignKeys(table[InlineForeignKeys]);
+      this.generateForeignKeys(table[this.InlineForeignKeys as typeof AnyInlineForeignKeys]);
     }
 
     const dbml = new DBML().insert('table ');
@@ -168,11 +169,11 @@ export abstract class BaseGenerator<
     for (let i = 0; i < fks.length; i++) {
       const dbml = new DBML()
         .insert(`ref ${fks[i].getName()}: `)
-        .escapeSpaces((fks[i].table as unknown as Table)[TableName])
+        .escapeSpaces((fks[i].table as unknown as AnyTable)[TableName])
         .insert('.')
         .insert(wrapColumns(fks[i].reference().columns))
         .insert(' > ')
-        .escapeSpaces((fks[i].reference().foreignTable as unknown as Table)[TableName])
+        .escapeSpaces((fks[i].reference().foreignTable as unknown as AnyTable)[TableName])
         .insert('.')
         .insert(wrapColumns(fks[i].reference().foreignColumns));
 
@@ -218,7 +219,7 @@ export abstract class BaseGenerator<
       for (const relationName in relations) {
         const relation = relations[relationName];
         const tableNames: string[] = [
-          (relations_[i].table as unknown as Table)[TableName],
+          (relations_[i].table as unknown as AnyTable)[TableName],
           relation.referencedTableName
         ].sort();
         const key = `${tableNames[0]}-${tableNames[1]}${
@@ -228,7 +229,7 @@ export abstract class BaseGenerator<
         if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
           left[key] = {
             type: 'one',
-            sourceTable: (relation.sourceTable as unknown as Table)[TableName],
+            sourceTable: (relation.sourceTable as unknown as AnyTable)[TableName],
             sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
             foreignTable: relation.referencedTableName,
             foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
@@ -280,7 +281,7 @@ export abstract class BaseGenerator<
       if (isPgEnum(value)) {
         generatedEnums.push(this.generateEnum(value));
       } else if (isTable(value)) {
-        generatedTables.push(this.generateTable(value as unknown as Table));
+        generatedTables.push(this.generateTable(value as unknown as AnyTable));
       } else if (is(value, Relations)) {
         relations.push(value);
       }

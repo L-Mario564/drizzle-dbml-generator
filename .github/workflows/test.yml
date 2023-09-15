@@ -29,3 +29,5 @@ jobs:
         run: pnpm lint
       - name: Test Postgres Dialect
         run: pnpm test:pg
+      - name: Test MySQL Dialect
+        run: pnpm test:mysql
