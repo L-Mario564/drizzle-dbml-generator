@@ -5,8 +5,8 @@ Generate DBML markup from your schema defined with Drizzle ORM.
 ## Dialect Support
 
 - Postgres ✔️
-- MySQL ❌ (coming soon)
-- SQLite ❌
+- MySQL ✔️
+- SQLite ❌ (coming soon)
 
 ## Generate DBML
 
@@ -199,3 +199,11 @@ ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no acti
 | schema     | PgSchema | An object containing Postgres dialect tables, enums and relations                                                                                                                                         |
 | out        | string   | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
 | relational | boolean? | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
+
+**mysqlGenerate**
+
+| Option     | Type        | Description                                                                                                                                                                                               |
+| ---------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| schema     | MySqlSchema | An object containing MySQL dialect tables and relations                                                                                                                                                   |
+| out        | string      | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
+| relational | boolean?    | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
