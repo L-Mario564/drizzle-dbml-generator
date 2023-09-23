@@ -1,6 +1,11 @@
 import type { AnyColumn, AnyTable as DrizzleAnyTable, Relations } from 'drizzle-orm';
 import type { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint } from 'drizzle-orm/pg-core';
-import type { AnyInlineForeignKeys, TableName, Schema as SchemaSymbol, ExtraConfigBuilder } from './symbols';
+import type {
+  AnyInlineForeignKeys,
+  TableName,
+  Schema as SchemaSymbol,
+  ExtraConfigBuilder
+} from './symbols';
 
 export type AnyTable = DrizzleAnyTable['_']['columns'] & {
   [AnyInlineForeignKeys]: ForeignKey[];

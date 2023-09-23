@@ -1,8 +1,15 @@
 import type { AnyColumn } from 'drizzle-orm';
 
-export function formatList(items: string[], escapeName: (name: string) => string, escapeSpaces: boolean = false) {
+export function formatList(
+  items: string[],
+  escapeName: (name: string) => string,
+  escapeSpaces: boolean = false
+) {
   return items
-    .reduce((str, item) => `${str}, ${escapeSpaces && item.includes(' ') ? escapeName(item) : item}`, '')
+    .reduce(
+      (str, item) => `${str}, ${escapeSpaces && item.includes(' ') ? escapeName(item) : item}`,
+      ''
+    )
     .slice(2);
 }
 

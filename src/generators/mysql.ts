@@ -15,7 +15,10 @@ class MySqlGenerator extends BaseGenerator<MySqlSchema, AnyMySqlColumn> {
   };
 
   protected override isIncremental(column: AnyMySqlColumn) {
-    return column.getSQLType().includes('serial') || (is(column, MySqlColumnWithAutoIncrement) && column.autoIncrement);
+    return (
+      column.getSQLType().includes('serial') ||
+      (is(column, MySqlColumnWithAutoIncrement) && column.autoIncrement)
+    );
   }
 }
 

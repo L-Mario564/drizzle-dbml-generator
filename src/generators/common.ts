@@ -29,7 +29,10 @@ export abstract class BaseGenerator<
   private readonly schema: Schema;
   private readonly relational: boolean;
   private generatedRefs: string[] = [];
-  protected InlineForeignKeys: typeof AnyInlineForeignKeys | typeof PgInlineForeignKeys | typeof MySqlInlineForeignKeys = AnyInlineForeignKeys;
+  protected InlineForeignKeys:
+    | typeof AnyInlineForeignKeys
+    | typeof PgInlineForeignKeys
+    | typeof MySqlInlineForeignKeys = AnyInlineForeignKeys;
   protected buildQueryConfig: BuildQueryConfig = {
     escapeName: () => '',
     escapeParam: () => '',
@@ -139,7 +142,10 @@ export abstract class BaseGenerator<
         dbml.tab(2);
 
         if (is(index, PgIndex) || is(index, MySqlIndex)) {
-          const idxColumns = wrapColumns(index.config.columns as AnyColumn[], this.buildQueryConfig.escapeName);
+          const idxColumns = wrapColumns(
+            index.config.columns as AnyColumn[],
+            this.buildQueryConfig.escapeName
+          );
           const idxProperties = index.config.name
             ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
             : '';

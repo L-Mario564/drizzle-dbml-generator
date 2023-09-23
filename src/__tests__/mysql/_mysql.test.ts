@@ -2,7 +2,35 @@ import { describe, expect, it } from 'vitest';
 import { compareContents } from '../utils';
 import { mysqlGenerate } from '~/generators';
 //import { relations } from 'drizzle-orm';
-import { bigint, binary, boolean, char, datetime, decimal, double, float, foreignKey, index, int, mediumint, mysqlEnum, mysqlTable, primaryKey, real, serial, smallint, text, time, timestamp, tinyint, unique, uniqueIndex, varbinary, varchar, year } from 'drizzle-orm/mysql-core';
+import {
+  bigint,
+  binary,
+  boolean,
+  char,
+  datetime,
+  decimal,
+  double,
+  float,
+  foreignKey,
+  index,
+  int,
+  mediumint,
+  mysqlEnum,
+  mysqlTable,
+  primaryKey,
+  real,
+  serial,
+  smallint,
+  text,
+  time,
+  timestamp,
+  tinyint,
+  unique,
+  uniqueIndex,
+  varbinary,
+  varchar,
+  year
+} from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 const pathPrefix = './src/__tests__/mysql/';
