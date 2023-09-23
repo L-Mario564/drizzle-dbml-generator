@@ -1,0 +1,10 @@
+table my_table {
+  pk int [pk, not null]
+  nn int [not null]
+  u int [unique]
+  default_s text [default: 'some text']
+  default_n int [default: 1]
+  default_now timestamp [default: `(now())`]
+  ai serial [increment]
+  multiple text [not null, default: 'other text']
+}

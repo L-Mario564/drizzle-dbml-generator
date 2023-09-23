@@ -1,0 +1,10 @@
+table users {
+  id serial [pk, not null, increment]
+}
+
+table posts {
+  id serial [pk, not null, increment]
+  posted_by_id int [not null]
+}
+
+ref posts_posted_by_id_users_id_fk: posts.posted_by_id > users.id [delete: cascade, update: no action]

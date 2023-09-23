@@ -1,0 +1,13 @@
+table users {
+  id serial [pk, not null, increment]
+  registered_at timestamp
+  username text
+}
+
+table posts {
+  id serial [pk, not null, increment]
+  posted_by_user_registered_at timestamp
+  posted_by text
+}
+
+ref posts_posted_by_posted_by_user_registered_at_users_username_registered_at_fk: posts.(posted_by, posted_by_user_registered_at) > users.(username, registered_at) [delete: no action, update: no action]

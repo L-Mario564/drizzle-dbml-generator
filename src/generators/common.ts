@@ -3,13 +3,19 @@ import { DBML } from '~/dbml';
 import { One, Relations, SQL, createMany, createOne, is, isTable } from 'drizzle-orm';
 import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
 import {
-  ForeignKey,
-  Index,
+  ForeignKey as PgForeignKey,
+  Index as PgIndex,
   PgEnum,
-  PrimaryKey,
-  UniqueConstraint,
+  PrimaryKey as PgPrimaryKey,
+  UniqueConstraint as PgUniqueConstraint,
   isPgEnum
 } from 'drizzle-orm/pg-core';
+import {
+  ForeignKey as MySqlForeignKey,
+  Index as MySqlIndex,
+  PrimaryKey as MySqlPrimaryKey,
+  UniqueConstraint as MySqlUniqueConstraint
+} from 'drizzle-orm/mysql-core';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import type { PgInlineForeignKeys, MySqlInlineForeignKeys } from '~/symbols';
@@ -86,7 +92,7 @@ export abstract class BaseGenerator<
     }
 
     if (constraints.length > 0) {
-      dbml.insert(` [${formatList(constraints)}]`);
+      dbml.insert(` [${formatList(constraints, this.buildQueryConfig.escapeName)}]`);
     }
 
     return dbml.build();
@@ -116,8 +122,8 @@ export abstract class BaseGenerator<
       (b: AnyBuilder) => b.build(table)
     );
     const fks = builtIndexes.filter(
-      (index) => is(index, ForeignKey)
-    ) as unknown as ForeignKey[];
+      (index) => is(index, PgForeignKey) || is(index, MySqlForeignKey)
+    ) as unknown as (PgForeignKey | MySqlForeignKey)[];
 
     if (!this.relational) {
       this.generateForeignKeys(fks);
@@ -132,21 +138,21 @@ export abstract class BaseGenerator<
         const index = indexes[indexName].build(table);
         dbml.tab(2);
 
-        if (is(index, Index)) {
-          const idxColumns = wrapColumns(index.config.columns);
+        if (is(index, PgIndex) || is(index, MySqlIndex)) {
+          const idxColumns = wrapColumns(index.config.columns as AnyColumn[], this.buildQueryConfig.escapeName);
           const idxProperties = index.config.name
             ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
             : '';
           dbml.insert(`${idxColumns}${idxProperties}`);
         }
 
-        if (is(index, PrimaryKey)) {
-          const pkColumns = wrapColumns(index.columns);
+        if (is(index, PgPrimaryKey) || is(index, MySqlPrimaryKey)) {
+          const pkColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
           dbml.insert(`${pkColumns} [pk]`);
         }
 
-        if (is(index, UniqueConstraint)) {
-          const uqColumns = wrapColumns(index.columns);
+        if (is(index, PgUniqueConstraint) || is(index, MySqlUniqueConstraint)) {
+          const uqColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
           const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
           dbml.insert(`${uqColumns} ${uqProperties}`);
         }
@@ -165,32 +171,23 @@ export abstract class BaseGenerator<
     return '';
   }
 
-  private generateForeignKeys(fks: ForeignKey[]) {
+  private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey)[]) {
     for (let i = 0; i < fks.length; i++) {
       const dbml = new DBML()
         .insert(`ref ${fks[i].getName()}: `)
         .escapeSpaces((fks[i].table as unknown as AnyTable)[TableName])
         .insert('.')
-        .insert(wrapColumns(fks[i].reference().columns))
+        .insert(wrapColumns(fks[i].reference().columns, this.buildQueryConfig.escapeName))
         .insert(' > ')
         .escapeSpaces((fks[i].reference().foreignTable as unknown as AnyTable)[TableName])
         .insert('.')
-        .insert(wrapColumns(fks[i].reference().foreignColumns));
+        .insert(wrapColumns(fks[i].reference().foreignColumns, this.buildQueryConfig.escapeName));
 
-      const actions: string[] = [];
-      let actionsStr = '';
-
-      if (fks[i].onDelete) {
-        actions.push(`delete: ${fks[i].onDelete}`);
-      }
-
-      if (fks[i].onUpdate) {
-        actions.push(`update: ${fks[i].onUpdate}`);
-      }
-
-      if (actions.length > 0) {
-        actionsStr = ` [${formatList(actions)}]`;
-      }
+      const actions: string[] = [
+        `delete: ${fks[i].onDelete || 'no action'}`,
+        `update: ${fks[i].onUpdate || 'no action'}`
+      ];
+      const actionsStr = ` [${formatList(actions, this.buildQueryConfig.escapeName)}]`;
 
       dbml.insert(actionsStr);
       this.generatedRefs.push(dbml.build());
@@ -259,11 +256,11 @@ export abstract class BaseGenerator<
         .insert('ref: ')
         .escapeSpaces(sourceTable)
         .insert('.')
-        .insert(wrapColumnNames(sourceColumns))
+        .insert(wrapColumnNames(sourceColumns, this.buildQueryConfig.escapeName))
         .insert(` ${relationType === 'one' ? '-' : '>'} `)
         .escapeSpaces(foreignTable)
         .insert('.')
-        .insert(wrapColumnNames(foreignColumns))
+        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName))
         .build();
 
       this.generatedRefs.push(dbml);

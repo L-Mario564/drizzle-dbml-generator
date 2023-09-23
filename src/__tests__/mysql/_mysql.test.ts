@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareContents } from '../utils';
 import { mysqlGenerate } from '~/generators';
 //import { relations } from 'drizzle-orm';
-import { bigint, binary, boolean, char, datetime, decimal, double, float, int, mediumint, mysqlEnum, mysqlTable, real, serial, smallint, text, time, timestamp, tinyint, varbinary, varchar, year } from 'drizzle-orm/mysql-core';
+import { bigint, binary, boolean, char, datetime, decimal, double, float, foreignKey, index, int, mediumint, mysqlEnum, mysqlTable, primaryKey, real, serial, smallint, text, time, timestamp, tinyint, unique, uniqueIndex, varbinary, varchar, year } from 'drizzle-orm/mysql-core';
 
 const pathPrefix = './src/__tests__/mysql/';
 
@@ -39,105 +39,103 @@ async function typesTest() {
   expect(result).toBe(true);
 }
 
-// async function constraintsTest() {
-//   const myTable = pgTable('my_table', {
-//     pk: integer('pk').primaryKey(),
-//     nn: integer('nn').notNull(),
-//     u: integer('u').unique(),
-//     defaultS: text('default_s').default('some text'),
-//     defaultN: integer('default_n').default(1),
-//     defaultNow: timestamp('default_now').defaultNow(),
-//     defaultA: integer('default_a').array().default([1, 2, 3]),
-//     ai: serial('ai'),
-//     multiple: text('multiple').notNull().default('other text')
-//   });
+async function constraintsTest() {
+  const myTable = mysqlTable('my_table', {
+    pk: int('pk').primaryKey(),
+    nn: int('nn').notNull(),
+    u: int('u').unique(),
+    defaultS: text('default_s').default('some text'),
+    defaultN: int('default_n').default(1),
+    defaultNow: timestamp('default_now').defaultNow(),
+    ai: serial('ai'),
+    multiple: text('multiple').notNull().default('other text')
+  });
 
-//   const schema = { myTable };
-//   const out = `${pathPrefix}constraints.generated.dbml`;
-//   pgGenerate({ schema, out });
+  const schema = { myTable };
+  const out = `${pathPrefix}constraints.generated.dbml`;
+  mysqlGenerate({ schema, out });
 
-//   const result = await compareContents(out);
-//   expect(result).toBe(true);
-// }
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
 
-// async function inlineFkTest() {
-//   const users = pgTable('users', {
-//     id: serial('id').primaryKey()
-//   });
-//   const posts = pgTable('posts', {
-//     id: serial('id').primaryKey(),
-//     postedById: integer('posted_by_id')
-//       .notNull()
-//       .references(() => users.id, {
-//         onDelete: 'cascade',
-//         onUpdate: 'no action'
-//       })
-//   });
+async function inlineFkTest() {
+  const users = mysqlTable('users', {
+    id: serial('id').primaryKey()
+  });
+  const posts = mysqlTable('posts', {
+    id: serial('id').primaryKey(),
+    postedById: int('posted_by_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'cascade',
+        onUpdate: 'no action'
+      })
+  });
 
-//   const schema = { users, posts };
-//   const out = `${pathPrefix}inline-fk.generated.dbml`;
-//   pgGenerate({ schema, out });
+  const schema = { users, posts };
+  const out = `${pathPrefix}inline-fk.generated.dbml`;
+  mysqlGenerate({ schema, out });
 
-//   const result = await compareContents(out);
-//   expect(result).toBe(true);
-// }
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
 
-// async function fkTest() {
-//   const users = pgTable('users', {
-//     id: serial('id').primaryKey(),
-//     registeredAt: timestamp('registered_at'),
-//     username: text('username')
-//   });
-//   const posts = pgTable(
-//     'posts',
-//     {
-//       id: serial('id').primaryKey(),
-//       postedByUserRegisteredAt: timestamp('posted_by_user_registered_at'),
-//       postedBy: text('posted_by')
-//     },
-//     (tbl) => ({
-//       fk: foreignKey({
-//         columns: [tbl.postedBy, tbl.postedByUserRegisteredAt],
-//         foreignColumns: [users.username, users.registeredAt]
-//       })
-//     })
-//   );
+async function fkTest() {
+  const users = mysqlTable('users', {
+    id: serial('id').primaryKey(),
+    registeredAt: timestamp('registered_at'),
+    username: text('username')
+  });
+  const posts = mysqlTable(
+    'posts',
+    {
+      id: serial('id').primaryKey(),
+      postedByUserRegisteredAt: timestamp('posted_by_user_registered_at'),
+      postedBy: text('posted_by')
+    },
+    (tbl) => ({
+      fk: foreignKey({
+        columns: [tbl.postedBy, tbl.postedByUserRegisteredAt],
+        foreignColumns: [users.username, users.registeredAt]
+      })
+    })
+  );
 
-//   const schema = { users, posts };
-//   const out = `${pathPrefix}fk.generated.dbml`;
-//   pgGenerate({ schema, out });
+  const schema = { users, posts };
+  const out = `${pathPrefix}fk.generated.dbml`;
+  mysqlGenerate({ schema, out });
 
-//   const result = await compareContents(out);
-//   expect(result).toBe(true);
-// }
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
 
-// async function indexesTest() {
-//   const table = pgTable(
-//     'table',
-//     {
-//       f1: integer('f1'),
-//       f2: integer('f2'),
-//       f3: integer('f3'),
-//       f4: integer('f4')
-//     },
-//     (tbl) => ({
-//       compositePk: primaryKey(tbl.f1, tbl.f2),
-//       unique1: unique('key_1').on(tbl.f1),
-//       unique2: unique('key_2').on(tbl.f1, tbl.f2),
-//       unique3: uniqueIndex('key_3').on(tbl.f2),
-//       index1: index('key_4').on(tbl.f3),
-//       index2: index('key_5').on(tbl.f3, tbl.f4),
-//       index3: index().on(tbl.f4)
-//     })
-//   );
+async function indexesTest() {
+  const table = mysqlTable(
+    'table',
+    {
+      f1: int('f1'),
+      f2: int('f2'),
+      f3: int('f3'),
+      f4: int('f4')
+    },
+    (tbl) => ({
+      compositePk: primaryKey(tbl.f1, tbl.f2),
+      unique1: unique('key_1').on(tbl.f1),
+      unique2: unique('key_2').on(tbl.f1, tbl.f2),
+      unique3: uniqueIndex('key_3').on(tbl.f2),
+      index1: index('key_4').on(tbl.f3),
+      index2: index('key_5').on(tbl.f3, tbl.f4)
+    })
+  );
 
-//   const schema = { table };
-//   const out = `${pathPrefix}indexes.generated.dbml`;
-//   pgGenerate({ schema, out });
+  const schema = { table };
+  const out = `${pathPrefix}indexes.generated.dbml`;
+  mysqlGenerate({ schema, out });
 
-//   const result = await compareContents(out);
-//   expect(result).toBe(true);
-// }
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
 
 // async function rqbTest() {
 //   const users = pgTable('users', {
@@ -297,10 +295,10 @@ async function typesTest() {
 
 describe('MySQL dialect tests', () => {
   it('Outputs all native types', typesTest);
-  // it('Outputs all column constraints', constraintsTest);
-  // it('Outputs an inline foreign key', inlineFkTest);
-  // it('Outputs a foreign key', fkTest);
-  // it('Outputs all indexes', indexesTest);
+  it('Outputs all column constraints', constraintsTest);
+  it('Outputs an inline foreign key', inlineFkTest);
+  it('Outputs a foreign key', fkTest);
+  it('Outputs all indexes', indexesTest);
   // it('Outputs relations written with the RQB API', rqbTest);
   // it('Outputs the result of a more "realistic" schema', realTest);
 });
