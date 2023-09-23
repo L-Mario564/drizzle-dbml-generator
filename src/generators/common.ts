@@ -18,7 +18,11 @@ import {
 } from 'drizzle-orm/mysql-core';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
-import type { PgInlineForeignKeys, MySqlInlineForeignKeys } from '~/symbols';
+import type {
+  PgInlineForeignKeys,
+  MySqlInlineForeignKeys,
+  SQLiteInlineForeignKeys
+} from '~/symbols';
 import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
@@ -32,7 +36,8 @@ export abstract class BaseGenerator<
   protected InlineForeignKeys:
     | typeof AnyInlineForeignKeys
     | typeof PgInlineForeignKeys
-    | typeof MySqlInlineForeignKeys = AnyInlineForeignKeys;
+    | typeof MySqlInlineForeignKeys
+    | typeof SQLiteInlineForeignKeys = AnyInlineForeignKeys;
   protected buildQueryConfig: BuildQueryConfig = {
     escapeName: () => '',
     escapeParam: () => '',
@@ -57,6 +62,8 @@ export abstract class BaseGenerator<
       str = `${value}`;
     } else if (value === null) {
       str = 'null';
+    } else if (value instanceof Date) {
+      str = `'${value.toISOString().replace('T', ' ').replace('Z', '')}'`;
     } else if (is(value, SQL)) {
       str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
     } else {

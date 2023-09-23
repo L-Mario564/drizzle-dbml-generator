@@ -32,3 +32,4 @@ type Schema<DialectTypes = NonNullable<unknown>> = Record<
 export type AnySchema = Schema;
 export type PgSchema = Schema<PgEnum<[string, ...string[]]>>;
 export type MySqlSchema = Schema;
+export type SQLiteSchema = Schema;

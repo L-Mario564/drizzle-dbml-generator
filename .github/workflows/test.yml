@@ -31,3 +31,5 @@ jobs:
         run: pnpm test:pg
       - name: Test MySQL Dialect
         run: pnpm test:mysql
+      - name: Test SQLite Dialect
+        run: pnpm test:sqlite

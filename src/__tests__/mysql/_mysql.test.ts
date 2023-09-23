@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compareContents } from '../utils';
 import { mysqlGenerate } from '~/generators';
-//import { relations } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import {
   bigint,
   binary,
@@ -31,7 +31,6 @@ import {
   varchar,
   year
 } from 'drizzle-orm/mysql-core';
-import { relations } from 'drizzle-orm';
 
 const pathPrefix = './src/__tests__/mysql/';
 

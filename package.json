@@ -11,7 +11,8 @@
     "fmt": "npx prettier --write .",
     "lint": "npx eslint . && npx tsc --noEmit",
     "test:pg": "npx vitest run --dir src/__tests__/pg",
-    "test:mysql": "npx vitest run --dir src/__tests__/mysql"
+    "test:mysql": "npx vitest run --dir src/__tests__/mysql",
+    "test:sqlite": "npx vitest run --dir src/__tests__/sqlite"
   },
   "repository": {
     "type": "git",
