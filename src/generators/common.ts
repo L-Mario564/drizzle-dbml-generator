@@ -16,6 +16,12 @@ import {
   PrimaryKey as MySqlPrimaryKey,
   UniqueConstraint as MySqlUniqueConstraint
 } from 'drizzle-orm/mysql-core';
+import {
+  ForeignKey as SQLiteForeignKey,
+  Index as SQLiteIndex,
+  PrimaryKey as SQLitePrimaryKey,
+  UniqueConstraint as SQLiteUniqueConstraint
+} from 'drizzle-orm/sqlite-core';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import type {
@@ -132,8 +138,9 @@ export abstract class BaseGenerator<
       (b: AnyBuilder) => b.build(table)
     );
     const fks = builtIndexes.filter(
-      (index) => is(index, PgForeignKey) || is(index, MySqlForeignKey)
-    ) as unknown as (PgForeignKey | MySqlForeignKey)[];
+      (index) =>
+        is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
+    ) as unknown as (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[];
 
     if (!this.relational) {
       this.generateForeignKeys(fks);
@@ -148,7 +155,7 @@ export abstract class BaseGenerator<
         const index = indexes[indexName].build(table);
         dbml.tab(2);
 
-        if (is(index, PgIndex) || is(index, MySqlIndex)) {
+        if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
           const idxColumns = wrapColumns(
             index.config.columns as AnyColumn[],
             this.buildQueryConfig.escapeName
@@ -159,12 +166,16 @@ export abstract class BaseGenerator<
           dbml.insert(`${idxColumns}${idxProperties}`);
         }
 
-        if (is(index, PgPrimaryKey) || is(index, MySqlPrimaryKey)) {
+        if (is(index, PgPrimaryKey) || is(index, MySqlPrimaryKey) || is(index, SQLitePrimaryKey)) {
           const pkColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
           dbml.insert(`${pkColumns} [pk]`);
         }
 
-        if (is(index, PgUniqueConstraint) || is(index, MySqlUniqueConstraint)) {
+        if (
+          is(index, PgUniqueConstraint) ||
+          is(index, MySqlUniqueConstraint) ||
+          is(index, SQLiteUniqueConstraint)
+        ) {
           const uqColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
           const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
           dbml.insert(`${uqColumns} ${uqProperties}`);
@@ -184,7 +195,7 @@ export abstract class BaseGenerator<
     return '';
   }
 
-  private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey)[]) {
+  private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[]) {
     for (let i = 0; i < fks.length; i++) {
       const dbml = new DBML()
         .insert(`ref ${fks[i].getName()}: `)

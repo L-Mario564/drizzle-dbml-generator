@@ -1,0 +1,8 @@
+table my_table {
+  pk integer [pk, not null, increment]
+  nn integer [not null]
+  u integer [unique]
+  default_s text [default: 'some text']
+  default_n integer [default: 1]
+  multiple text [not null, default: 'other text']
+}

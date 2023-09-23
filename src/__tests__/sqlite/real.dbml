@@ -1,0 +1,42 @@
+table users {
+  id integer [pk, not null, increment]
+  registered_at text [not null, default: `CURRENT_TIMESTAMP`]
+  username text [not null, unique]
+  bio text
+  has_blue integer [not null, default: 0]
+}
+
+table followers {
+  user_id integer [not null]
+  follows_user_id integer [not null]
+
+  indexes {
+    (user_id, follows_user_id) [pk]
+  }
+}
+
+table tweets {
+  id integer [pk, not null, increment]
+  posted_at text [not null, default: `CURRENT_TIMESTAMP`]
+  content text [not null]
+  posted_by_id integer [not null]
+}
+
+table likes {
+  liked_tweet_id integer [not null]
+  liked_by_id integer [not null]
+
+  indexes {
+    (liked_by_id, liked_tweet_id) [pk]
+  }
+}
+
+ref followers_user_id_users_id_fk: followers.user_id > users.id [delete: no action, update: no action]
+
+ref followers_follows_user_id_users_id_fk: followers.follows_user_id > users.id [delete: no action, update: no action]
+
+ref tweets_posted_by_id_users_id_fk: tweets.posted_by_id > users.id [delete: no action, update: no action]
+
+ref likes_liked_tweet_id_tweets_id_fk: likes.liked_tweet_id > tweets.id [delete: no action, update: no action]
+
+ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no action, update: no action]
