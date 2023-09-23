@@ -1,12 +1,6 @@
 # Drizzle DBML Generator
 
-Generate DBML markup from your schema defined with Drizzle ORM.
-
-## Dialect Support
-
-- Postgres ✔️
-- MySQL ✔️
-- SQLite ❌ (coming soon)
+Generate DBML markup from your schema defined with Drizzle ORM. Works with any dialect.
 
 ## Generate DBML
 
@@ -207,3 +201,11 @@ ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no acti
 | schema     | MySqlSchema | An object containing MySQL dialect tables and relations                                                                                                                                                   |
 | out        | string      | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
 | relational | boolean?    | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
+
+**sqliteGenerate**
+
+| Option     | Type         | Description                                                                                                                                                                                               |
+| ---------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| schema     | SQLiteSchema | An object containing SQLite dialect tables and relations                                                                                                                                                  |
+| out        | string       | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
+| relational | boolean?     | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |

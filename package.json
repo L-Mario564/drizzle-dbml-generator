@@ -1,6 +1,6 @@
 {
   "name": "drizzle-dbml-generator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Convert your Drizzle ORM schema into DBML markup",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
