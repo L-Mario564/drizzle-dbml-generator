@@ -38,6 +38,7 @@
     "vitest": "^0.34.3"
   },
   "dependencies": {
-    "drizzle-orm": "^0.28.6"
+    "drizzle-dbml-generator": "link:",
+    "drizzle-orm": "^0.29.0"
   }
 }

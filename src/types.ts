@@ -1,4 +1,4 @@
-import type { AnyColumn, AnyTable as DrizzleAnyTable, Relations } from 'drizzle-orm';
+import type { AnyColumn, Table, Relations } from 'drizzle-orm';
 import type { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint } from 'drizzle-orm/pg-core';
 import type {
   AnyInlineForeignKeys,
@@ -7,7 +7,7 @@ import type {
   ExtraConfigBuilder
 } from './symbols';
 
-export type AnyTable = DrizzleAnyTable['_']['columns'] & {
+export type AnyTable = Table['_']['columns'] & {
   [AnyInlineForeignKeys]: ForeignKey[];
   [TableName]: string;
   [SchemaSymbol]: string | undefined;
@@ -27,7 +27,7 @@ export type Options<Schema> = {
 
 type Schema<DialectTypes = NonNullable<unknown>> = Record<
   string,
-  DialectTypes | Relations | AnyTable | DrizzleAnyTable
+  DialectTypes | Relations | AnyTable | Table
 >;
 export type AnySchema = Schema;
 export type PgSchema = Schema<PgEnum<[string, ...string[]]>>;
