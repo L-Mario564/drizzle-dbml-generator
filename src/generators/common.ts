@@ -1,6 +1,15 @@
 import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
 import { DBML } from '~/dbml';
-import { One, Relations, SQL, createMany, createOne, is, isTable } from 'drizzle-orm';
+import {
+  One,
+  Relations,
+  SQL,
+  createMany,
+  createOne,
+  getTableColumns,
+  is,
+  isTable
+} from 'drizzle-orm';
 import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
 import {
   ForeignKey as PgForeignKey,
@@ -29,7 +38,7 @@ import type {
   MySqlInlineForeignKeys,
   SQLiteInlineForeignKeys
 } from '~/symbols';
-import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
+import type { AnyColumn, BuildQueryConfig, Table } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
 export abstract class BaseGenerator<
@@ -127,9 +136,10 @@ export abstract class BaseGenerator<
 
     dbml.escapeSpaces(table[TableName]).insert(' {').newLine();
 
-    for (const columnName in table) {
-      const column = table[columnName] as unknown as Column;
-      const columnDBML = this.generateColumn(column);
+    const columns = getTableColumns(table as unknown as Table);
+    for (const columnName in columns) {
+      const column = columns[columnName];
+      const columnDBML = this.generateColumn(column as Column);
       dbml.insert(columnDBML).newLine();
     }
 
