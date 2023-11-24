@@ -21,7 +21,7 @@ export type AnyBuilder = {
 };
 export type Options<Schema> = {
   schema: Schema;
-  out: string;
+  out?: string;
   relational?: boolean;
 };
 
