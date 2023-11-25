@@ -191,7 +191,7 @@ ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no acti
 | Option     | Type     | Description                                                                                                                                                                                               |
 | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | schema     | PgSchema | An object containing Postgres dialect tables, enums and relations                                                                                                                                         |
-| out        | string   | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
+| out?       | string   | The output directory and file name. Uses the current working directory as the root. If not set, it will not write the DBML file.                                                                          |
 | relational | boolean? | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
 
 **mysqlGenerate**
@@ -199,7 +199,7 @@ ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no acti
 | Option     | Type        | Description                                                                                                                                                                                               |
 | ---------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | schema     | MySqlSchema | An object containing MySQL dialect tables and relations                                                                                                                                                   |
-| out        | string      | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
+| out?       | string      | The output directory and file name. Uses the current working directory as the root. If not set, it will not write the DBML file.                                                                          |
 | relational | boolean?    | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
 
 **sqliteGenerate**
@@ -207,5 +207,7 @@ ref likes_liked_by_id_users_id_fk: likes.liked_by_id > users.id [delete: no acti
 | Option     | Type         | Description                                                                                                                                                                                               |
 | ---------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | schema     | SQLiteSchema | An object containing SQLite dialect tables and relations                                                                                                                                                  |
-| out        | string       | The output directory and file name. Uses the current working directory as the root                                                                                                                        |
+| out?       | string       | The output directory and file name. Uses the current working directory as the root. If not set, it will not write the DBML file.                                                                          |
 | relational | boolean?     | If set to true, it will create references based on the relations generated with the `relations` function instead of foreign keys. Useful for databases that don't support foreign keys. Default: `false`. |
+
+All generate functions return the DBML as a string regardless if a file is written or not, in case you want to do something with the generated DBML.
