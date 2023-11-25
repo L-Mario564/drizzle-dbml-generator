@@ -29,8 +29,9 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
   }
 }
 
-export function pgGenerate<T>(options: Options<T>) {
+export function pgGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
   const dbml = new PgGenerator(options.schema as PgSchema, options.relational).generate();
-  writeDBMLFile(dbml, options.out);
+  options.out && writeDBMLFile(dbml, options.out);
+  return dbml;
 }

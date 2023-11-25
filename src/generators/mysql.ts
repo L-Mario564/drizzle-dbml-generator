@@ -22,8 +22,9 @@ class MySqlGenerator extends BaseGenerator<MySqlSchema, AnyMySqlColumn> {
   }
 }
 
-export function mysqlGenerate<T>(options: Options<T>) {
+export function mysqlGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
   const dbml = new MySqlGenerator(options.schema as MySqlSchema, options.relational).generate();
-  writeDBMLFile(dbml, options.out);
+  options.out && writeDBMLFile(dbml, options.out);
+  return dbml;
 }
