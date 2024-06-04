@@ -8,7 +8,8 @@ import {
   createOne,
   getTableColumns,
   is,
-  isTable
+  isTable,
+  Table
 } from 'drizzle-orm';
 import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
 import {
@@ -18,7 +19,7 @@ import {
   PrimaryKey as PgPrimaryKey,
   UniqueConstraint as PgUniqueConstraint,
   isPgEnum,
-  ExtraConfigColumn
+  PgTable
 } from 'drizzle-orm/pg-core';
 import {
   ForeignKey as MySqlForeignKey,
@@ -39,7 +40,7 @@ import type {
   MySqlInlineForeignKeys,
   SQLiteInlineForeignKeys
 } from '~/symbols';
-import type { AnyColumn, BuildQueryConfig, Table } from 'drizzle-orm';
+import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
 export abstract class BaseGenerator<
@@ -140,20 +141,25 @@ export abstract class BaseGenerator<
     const columns = getTableColumns(table as unknown as Table);
     for (const columnName in columns) {
       const column = columns[columnName];
-      // (HACK):: Inject defaults found here (which otherwise do not exist): https://github.com/drizzle-team/drizzle-orm/blob/3513d0a76f8a227a3f94673762ae73538fd849bc/drizzle-orm/src/pg-core/columns/common.ts#L153-L156
-      (column as ExtraConfigColumn).defaultConfig = {
-        order: 'asc',
-        nulls: 'last',
-        opClass: undefined
-      };
       const columnDBML = this.generateColumn(column as Column);
       dbml.insert(columnDBML).newLine();
     }
 
-    const extraConfig = table[ExtraConfigBuilder];
-    const builtIndexes = Object.values(table[ExtraConfigBuilder]?.(table) || {}).map(
-      (b: AnyBuilder) => b.build(table)
-    );
+    let extraConfigBuilder: AnyBuilder;
+    let extraConfig: Record<string, AnyBuilder> | undefined;
+
+    if (is(table, PgTable)) {
+      extraConfigBuilder = table[PgTable.Symbol.ExtraConfigBuilder];
+      extraConfig = extraConfigBuilder?.(table[Table.Symbol.ExtraConfigColumns]);
+    } else {
+      extraConfigBuilder = table[ExtraConfigBuilder];
+      extraConfig = extraConfigBuilder?.(table);
+    }
+
+    const builtIndexes = Object.values(extraConfig || {}).map((b: AnyBuilder) => {
+      console.log('Rush b', b);
+      return b.build(table);
+    });
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
@@ -163,8 +169,8 @@ export abstract class BaseGenerator<
       this.generateForeignKeys(fks);
     }
 
-    if (extraConfig && builtIndexes.length > fks.length) {
-      const indexes = extraConfig(table);
+    if (extraConfigBuilder && builtIndexes.length > fks.length) {
+      const indexes = extraConfig;
 
       dbml.newLine().tab().insert('indexes {').newLine();
 

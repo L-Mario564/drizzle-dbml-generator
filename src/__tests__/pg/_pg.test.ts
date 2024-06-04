@@ -158,10 +158,11 @@ async function indexesTest() {
       compositePk: primaryKey(tbl.f1, tbl.f2),
       unique1: unique('key_1').on(tbl.f1),
       unique2: unique('key_2').on(tbl.f1, tbl.f2),
-      unique3: uniqueIndex('key_3').on(tbl.f2),
-      index1: index('key_4').on(tbl.f3),
+      unique3: uniqueIndex('key_3').on(tbl.f2.asc()),
+      index1: index('key_4').on(tbl.f3.desc()),
       index2: index('key_5').on(tbl.f3, tbl.f4),
-      index3: index().on(tbl.f4)
+      index3: index('key_6').on(tbl.f1.nullsFirst().desc()),
+      index4: index().on(tbl.f4)
     })
   );
 
