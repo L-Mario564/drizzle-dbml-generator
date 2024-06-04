@@ -156,10 +156,7 @@ export abstract class BaseGenerator<
       extraConfig = extraConfigBuilder?.(table);
     }
 
-    const builtIndexes = Object.values(extraConfig || {}).map((b: AnyBuilder) => {
-      console.log('Rush b', b);
-      return b.build(table);
-    });
+    const builtIndexes = Object.values(extraConfig || {}).map((b: AnyBuilder) => b.build(table));
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
