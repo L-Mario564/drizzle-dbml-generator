@@ -17,7 +17,8 @@ import {
   PgEnum,
   PrimaryKey as PgPrimaryKey,
   UniqueConstraint as PgUniqueConstraint,
-  isPgEnum
+  isPgEnum,
+  ExtraConfigColumn
 } from 'drizzle-orm/pg-core';
 import {
   ForeignKey as MySqlForeignKey,
@@ -139,6 +140,12 @@ export abstract class BaseGenerator<
     const columns = getTableColumns(table as unknown as Table);
     for (const columnName in columns) {
       const column = columns[columnName];
+      // (HACK):: Inject defaults found here (which otherwise do not exist): https://github.com/drizzle-team/drizzle-orm/blob/3513d0a76f8a227a3f94673762ae73538fd849bc/drizzle-orm/src/pg-core/columns/common.ts#L153-L156
+      (column as ExtraConfigColumn).defaultConfig = {
+        order: 'asc',
+        nulls: 'last',
+        opClass: undefined
+      };
       const columnDBML = this.generateColumn(column as Column);
       dbml.insert(columnDBML).newLine();
     }
