@@ -11,15 +11,20 @@ import {
   isTable,
   Table
 } from 'drizzle-orm';
-import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
+import {
+  AnyInlineForeignKeys,
+  ExtraConfigBuilder,
+  ExtraConfigColumns,
+  Schema,
+  TableName
+} from '~/symbols';
 import {
   ForeignKey as PgForeignKey,
   Index as PgIndex,
   PgEnum,
   PrimaryKey as PgPrimaryKey,
   UniqueConstraint as PgUniqueConstraint,
-  isPgEnum,
-  PgTable
+  isPgEnum
 } from 'drizzle-orm/pg-core';
 import {
   ForeignKey as MySqlForeignKey,
@@ -144,19 +149,11 @@ export abstract class BaseGenerator<
       const columnDBML = this.generateColumn(column as Column);
       dbml.insert(columnDBML).newLine();
     }
+    const extraConfigBuilder = table[ExtraConfigBuilder];
+    const extraConfigColumns = table[ExtraConfigColumns];
+    const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
 
-    let extraConfigBuilder: AnyBuilder;
-    let extraConfig: Record<string, AnyBuilder> | undefined;
-
-    if (is(table, PgTable)) {
-      extraConfigBuilder = table[PgTable.Symbol.ExtraConfigBuilder];
-      extraConfig = extraConfigBuilder?.(table[Table.Symbol.ExtraConfigColumns]);
-    } else {
-      extraConfigBuilder = table[ExtraConfigBuilder];
-      extraConfig = extraConfigBuilder?.(table);
-    }
-
-    const builtIndexes = Object.values(extraConfig || {}).map((b: AnyBuilder) => b.build(table));
+    const builtIndexes = Object.values(extraConfig ?? {}).map((b: AnyBuilder) => b.build(table));
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)

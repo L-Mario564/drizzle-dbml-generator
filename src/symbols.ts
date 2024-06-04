@@ -5,3 +5,4 @@ export const SQLiteInlineForeignKeys = Symbol.for('drizzle:SQLiteInlineForeignKe
 export const TableName = Symbol.for('drizzle:Name');
 export const Schema = Symbol.for('drizzle:Schema');
 export const ExtraConfigBuilder = Symbol.for('drizzle:ExtraConfigBuilder');
+export const ExtraConfigColumns = Symbol.for('drizzle:ExtraConfigColumns');

@@ -4,7 +4,8 @@ import type {
   AnyInlineForeignKeys,
   TableName,
   Schema as SchemaSymbol,
-  ExtraConfigBuilder
+  ExtraConfigBuilder,
+  ExtraConfigColumns
 } from './symbols';
 
 export type AnyTable = Table['_']['columns'] & {
@@ -14,6 +15,7 @@ export type AnyTable = Table['_']['columns'] & {
   [ExtraConfigBuilder]:
     | ((self: Record<string, AnyColumn>) => Record<string, AnyBuilder>)
     | undefined;
+  [ExtraConfigColumns]: Record<string, AnyColumn> | undefined;
 };
 
 export type AnyBuilder = {
