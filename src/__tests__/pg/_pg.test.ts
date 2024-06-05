@@ -29,7 +29,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { compareContents } from '../utils';
 import { pgGenerate } from '~/generators';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 const pathPrefix = './src/__tests__/pg/';
 
@@ -162,7 +162,8 @@ async function indexesTest() {
       index1: index('key_4').on(tbl.f3.desc()),
       index2: index('key_5').on(tbl.f3, tbl.f4),
       index3: index('key_6').on(tbl.f1.nullsFirst().desc()),
-      index4: index().on(tbl.f4)
+      index4: index().on(tbl.f4),
+      index5: index('key_7').using('btree', tbl.f1.asc(), sql`lower(${tbl.f2})`)
     })
   );
 

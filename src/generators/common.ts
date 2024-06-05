@@ -9,7 +9,8 @@ import {
   getTableColumns,
   is,
   isTable,
-  Table
+  Table,
+  Column
 } from 'drizzle-orm';
 import {
   AnyInlineForeignKeys,
@@ -173,8 +174,12 @@ export abstract class BaseGenerator<
         dbml.tab(2);
 
         if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
+          const configColumns = index.config.columns.flatMap((entry) =>
+            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : entry
+          );
+
           const idxColumns = wrapColumns(
-            index.config.columns as AnyColumn[],
+            configColumns as AnyColumn[],
             this.buildQueryConfig.escapeName
           );
           const idxProperties = index.config.name
