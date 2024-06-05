@@ -38,6 +38,6 @@
     "vitest": "^0.34.3"
   },
   "dependencies": {
-    "drizzle-orm": "^0.29.0"
+    "drizzle-orm": "^0.31.1"
   }
 }

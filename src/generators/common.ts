@@ -8,9 +8,17 @@ import {
   createOne,
   getTableColumns,
   is,
-  isTable
+  isTable,
+  Table,
+  Column
 } from 'drizzle-orm';
-import { AnyInlineForeignKeys, ExtraConfigBuilder, Schema, TableName } from '~/symbols';
+import {
+  AnyInlineForeignKeys,
+  ExtraConfigBuilder,
+  ExtraConfigColumns,
+  Schema,
+  TableName
+} from '~/symbols';
 import {
   ForeignKey as PgForeignKey,
   Index as PgIndex,
@@ -38,7 +46,7 @@ import type {
   MySqlInlineForeignKeys,
   SQLiteInlineForeignKeys
 } from '~/symbols';
-import type { AnyColumn, BuildQueryConfig, Table } from 'drizzle-orm';
+import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
 import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
 
 export abstract class BaseGenerator<
@@ -142,11 +150,11 @@ export abstract class BaseGenerator<
       const columnDBML = this.generateColumn(column as Column);
       dbml.insert(columnDBML).newLine();
     }
+    const extraConfigBuilder = table[ExtraConfigBuilder];
+    const extraConfigColumns = table[ExtraConfigColumns];
+    const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
 
-    const extraConfig = table[ExtraConfigBuilder];
-    const builtIndexes = Object.values(table[ExtraConfigBuilder]?.(table) || {}).map(
-      (b: AnyBuilder) => b.build(table)
-    );
+    const builtIndexes = Object.values(extraConfig ?? {}).map((b: AnyBuilder) => b.build(table));
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
@@ -156,8 +164,8 @@ export abstract class BaseGenerator<
       this.generateForeignKeys(fks);
     }
 
-    if (extraConfig && builtIndexes.length > fks.length) {
-      const indexes = extraConfig(table);
+    if (extraConfigBuilder && builtIndexes.length > fks.length) {
+      const indexes = extraConfig;
 
       dbml.newLine().tab().insert('indexes {').newLine();
 
@@ -166,8 +174,12 @@ export abstract class BaseGenerator<
         dbml.tab(2);
 
         if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
+          const configColumns = index.config.columns.flatMap((entry) =>
+            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : entry
+          );
+
           const idxColumns = wrapColumns(
-            index.config.columns as AnyColumn[],
+            configColumns as AnyColumn[],
             this.buildQueryConfig.escapeName
           );
           const idxProperties = index.config.name
