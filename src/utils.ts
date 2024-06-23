@@ -15,7 +15,7 @@ export function formatList(
 
 export function wrapColumns(columns: AnyColumn[], escapeName: (name: string) => string) {
   const formatted = formatList(
-    columns.map((column) => column.name),
+    columns.filter((column) => column !== undefined).map((column) => column.name),
     escapeName,
     true
   );
