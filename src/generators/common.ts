@@ -152,7 +152,7 @@ export abstract class BaseGenerator<
     }
     const extraConfigBuilder = table[ExtraConfigBuilder];
     const extraConfigColumns = table[ExtraConfigColumns];
-    const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
+    const extraConfig = extraConfigColumns ? extraConfigBuilder?.(extraConfigColumns ?? {}) : {};
 
     const builtIndexes = Object.values(extraConfig ?? {}).map((b: AnyBuilder) => b.build(table));
     const fks = builtIndexes.filter(
