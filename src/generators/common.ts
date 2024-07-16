@@ -247,8 +247,10 @@ export abstract class BaseGenerator<
         type: 'one' | 'many';
         sourceTable?: string;
         sourceColumns?: string[];
+        sourceSchema?: string;
         foreignTable?: string;
         foreignColumns?: string[];
+        foreignSchema?: string;
       }
     > = {};
     const right: typeof left = {};
@@ -261,6 +263,7 @@ export abstract class BaseGenerator<
 
       for (const relationName in relations) {
         const relation = relations[relationName];
+
         const tableNames: string[] = [
           (relations_[i].table as unknown as AnyTable)[TableName],
           relation.referencedTableName
@@ -274,8 +277,10 @@ export abstract class BaseGenerator<
             type: 'one',
             sourceTable: (relation.sourceTable as unknown as AnyTable)[TableName],
             sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
+            sourceSchema: (relation.sourceTable as unknown as AnyTable)[Schema],
             foreignTable: relation.referencedTableName,
-            foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
+            foreignColumns: (relation as One).config?.references.map((col) => col.name) || [],
+            foreignSchema: (relation.referencedTable as unknown as AnyTable)[Schema]
           };
         } else {
           right[key] = {
@@ -291,6 +296,8 @@ export abstract class BaseGenerator<
       const sourceColumns = left[key].sourceColumns || [];
       const foreignColumns = left[key].foreignColumns || [];
       const relationType = right[key]?.type || 'one';
+      const sourceSchema = left[key].sourceSchema || '';
+      const foreignSchema = left[key].foreignSchema || '';
 
       if (sourceColumns.length === 0 || foreignColumns.length === 0) {
         throw Error(
@@ -298,18 +305,28 @@ export abstract class BaseGenerator<
         );
       }
 
-      const dbml = new DBML()
-        .insert('ref: ')
+      let dbml = new DBML().insert('ref: ');
+      if (sourceSchema) {
+        dbml = dbml.escapeSpaces(sourceSchema).insert('.');
+      }
+
+      dbml = dbml
         .escapeSpaces(sourceTable)
         .insert('.')
         .insert(wrapColumnNames(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(` ${relationType === 'one' ? '-' : '>'} `)
+        .insert(` ${relationType === 'one' ? '-' : '>'} `);
+
+      if (foreignSchema) {
+        dbml = dbml.escapeSpaces(foreignSchema).insert('.');
+      }
+      dbml = dbml
         .escapeSpaces(foreignTable)
         .insert('.')
-        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName))
-        .build();
+        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName));
 
-      this.generatedRefs.push(dbml);
+      const result = dbml.build();
+
+      this.generatedRefs.push(result);
     }
   }
 

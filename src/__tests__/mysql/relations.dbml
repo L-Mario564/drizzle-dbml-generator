@@ -1,17 +1,17 @@
-table users {
+table test.users {
   id serial [pk, not null, increment]
   config_id int
 }
 
-table user_config {
+table test.user_config {
   id serial [pk, not null, increment]
 }
 
-table items {
+table test.items {
   id serial [pk, not null, increment]
   sold_by_id int [not null]
 }
 
-ref: users.config_id - user_config.id
+ref: test.users.config_id - test.user_config.id
 
-ref: items.sold_by_id > users.id
+ref: test.items.sold_by_id > test.users.id
