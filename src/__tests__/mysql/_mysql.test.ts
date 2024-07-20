@@ -16,6 +16,7 @@ import {
   int,
   mediumint,
   mysqlEnum,
+  mysqlSchema,
   mysqlTable,
   primaryKey,
   real,
@@ -166,7 +167,9 @@ async function indexesTest() {
 }
 
 async function rqbTest() {
-  const users = mysqlTable('users', {
+  const _schema = mysqlSchema('test');
+
+  const users = _schema.table('users', {
     id: serial('id').primaryKey(),
     configId: int('config_id').references(() => userConfig.id, {
       onDelete: 'set null'
@@ -180,14 +183,14 @@ async function rqbTest() {
     sells: many(items)
   }));
 
-  const userConfig = mysqlTable('user_config', {
+  const userConfig = _schema.table('user_config', {
     id: serial('id').primaryKey()
   });
   const userConfigRelations = relations(userConfig, ({ one }) => ({
     user: one(users)
   }));
 
-  const items = mysqlTable('items', {
+  const items = _schema.table('items', {
     id: serial('id').primaryKey(),
     soldById: int('sold_by_id')
       .notNull()

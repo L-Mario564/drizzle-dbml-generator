@@ -14,6 +14,7 @@ import {
   jsonb,
   numeric,
   pgEnum,
+  pgSchema,
   pgTable,
   primaryKey,
   real,
@@ -176,7 +177,9 @@ async function indexesTest() {
 }
 
 async function rqbTest() {
-  const users = pgTable('users', {
+  const _schema = pgSchema('test');
+
+  const users = _schema.table('users', {
     id: serial('id').primaryKey(),
     configId: integer('config_id').references(() => userConfig.id, {
       onDelete: 'set null'
@@ -190,14 +193,14 @@ async function rqbTest() {
     sells: many(items)
   }));
 
-  const userConfig = pgTable('user_config', {
+  const userConfig = _schema.table('user_config', {
     id: serial('id').primaryKey()
   });
   const userConfigRelations = relations(userConfig, ({ one }) => ({
     user: one(users)
   }));
 
-  const items = pgTable('items', {
+  const items = _schema.table('items', {
     id: serial('id').primaryKey(),
     soldById: integer('sold_by_id')
       .notNull()
