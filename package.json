@@ -7,6 +7,7 @@
   "typings": "dist/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepare": "npm run build",
     "build": "npx tsup src/index.ts --format cjs,esm --dts",
     "fmt": "npx prettier --write .",
     "lint": "npx eslint . && npx tsc --noEmit",
