@@ -8,7 +8,6 @@ import {
   createOne,
   getTableColumns,
   is,
-  isTable,
   Table,
   Column
 } from 'drizzle-orm';
@@ -25,18 +24,21 @@ import {
   PgEnum,
   PrimaryKey as PgPrimaryKey,
   UniqueConstraint as PgUniqueConstraint,
-  isPgEnum
+  isPgEnum,
+  PgTable
 } from 'drizzle-orm/pg-core';
 import {
   ForeignKey as MySqlForeignKey,
   Index as MySqlIndex,
   PrimaryKey as MySqlPrimaryKey,
+  MySqlTable,
   UniqueConstraint as MySqlUniqueConstraint
 } from 'drizzle-orm/mysql-core';
 import {
   ForeignKey as SQLiteForeignKey,
   Index as SQLiteIndex,
   PrimaryKey as SQLitePrimaryKey,
+  SQLiteTable,
   UniqueConstraint as SQLiteUniqueConstraint
 } from 'drizzle-orm/sqlite-core';
 import { writeFileSync } from 'fs';
@@ -175,7 +177,7 @@ export abstract class BaseGenerator<
 
         if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
           const configColumns = index.config.columns.flatMap((entry) =>
-            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : entry
+            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : (entry as Column)
           );
 
           const idxColumns = wrapColumns(
@@ -323,7 +325,7 @@ export abstract class BaseGenerator<
 
       if (isPgEnum(value)) {
         generatedEnums.push(this.generateEnum(value));
-      } else if (isTable(value)) {
+      } else if (is(value, PgTable) || is(value, MySqlTable) || is(value, SQLiteTable)) {
         generatedTables.push(this.generateTable(value as unknown as AnyTable));
       } else if (is(value, Relations)) {
         relations.push(value);
