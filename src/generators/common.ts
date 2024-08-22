@@ -167,7 +167,7 @@ export abstract class BaseGenerator<
     }
 
     if (extraConfigBuilder && builtIndexes.length > fks.length) {
-      const indexes = extraConfig;
+      const indexes = extraConfig ?? {};
 
       dbml.newLine().tab().insert('indexes {').newLine();
 
