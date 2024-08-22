@@ -39,6 +39,6 @@
     "vitest": "^0.34.3"
   },
   "peerDependencies": {
-    "drizzle-orm": "^0.32.0"
+    "drizzle-orm": ">=0.32.0"
   }
 }
