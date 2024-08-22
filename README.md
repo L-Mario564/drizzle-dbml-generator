@@ -4,15 +4,18 @@ Generate DBML markup from your schema defined with Drizzle ORM. Works with any d
 
 ## Generate DBML
 
-To generate the DBML markup from your schema, all you have to do is run a script that executes the generate function of the dialect you're working with. To do that, you must install `ts-node`, and `drizzle-dbml-generator` of course.
+To generate the DBML markup from your schema, all you have to do is run a script that executes the generate function of the dialect you're working with. To do that, you must install `tsx` to run Typescript files, `drizzle-orm` if it's not already installed and `drizzle-dbml-generator` of course.
 
 ```bash
 # npm
-npm i -D drizzle-dbml-generator ts-node
+npm i drizzle-orm
+npm i -D drizzle-dbml-generator tsx
 # yarn
-yarn add -D drizzle-dbml-generator ts-node
+yarn add drizzle-orm
+yarn add -D drizzle-dbml-generator tsx
 # pnpm
-pnpm add -D drizzle-dbml-generator ts-node
+pnpm add drizzle-orm
+pnpm add -D drizzle-dbml-generator tsx
 ```
 
 ### Example
@@ -134,7 +137,7 @@ Running the following command will generate the file with the DBML:
 
 ```bash
 # You can add this as a package.json script
-node --experimental-specifier-resolution=node --loader ts-node/esm dbml.ts
+tsx dbml.ts
 ```
 
 **schema.dbml**
