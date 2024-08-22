@@ -16,6 +16,7 @@ import {
   int,
   mediumint,
   mysqlEnum,
+  mysqlSchema,
   mysqlTable,
   primaryKey,
   real,
@@ -165,6 +166,25 @@ async function indexesTest() {
   expect(result).toBe(true);
 }
 
+async function schemasTest() {
+  const schema1 = mysqlSchema('schema1');
+  const schema2 = mysqlSchema('schema2');
+  const table1 = schema1.table('table1', {
+    id: serial('id').primaryKey(),
+    tabl2Id: int('table2_id').references(() => table2.id)
+  });
+  const table2 = schema2.table('table2', {
+    id: serial('id').primaryKey()
+  });
+
+  const schema = { schema1, schema2, table1, table2 };
+  const out = `${pathPrefix}schemas.generated.dbml`;
+  mysqlGenerate({ schema, out });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
+
 async function rqbTest() {
   const users = mysqlTable('users', {
     id: serial('id').primaryKey(),
@@ -213,6 +233,34 @@ async function rqbTest() {
   const out = `${pathPrefix}relations.generated.dbml`;
   const relational = true;
   mysqlGenerate({ schema, out, relational });
+
+  const result = await compareContents(out);
+  expect(result).toBe(true);
+}
+
+async function schemasRQBTest() {
+  const schema1 = mysqlSchema('schema1');
+  const schema2 = mysqlSchema('schema2');
+  const table1 = schema1.table('table1', {
+    id: serial('id').primaryKey(),
+    tabl2Id: int('table2_id').references(() => table2.id)
+  });
+  const table1Relations = relations(table1, ({ one }) => ({
+    table2: one(table2, {
+      fields: [table1.tabl2Id],
+      references: [table2.id]
+    })
+  }));
+  const table2 = schema2.table('table2', {
+    id: serial('id').primaryKey()
+  });
+  const table2Relations = relations(table2, ({ many }) => ({
+    table1: many(table1)
+  }));
+
+  const schema = { schema1, schema2, table1, table1Relations, table2, table2Relations };
+  const out = `${pathPrefix}schemas-rqb.generated.dbml`;
+  mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
   expect(result).toBe(true);
@@ -327,6 +375,8 @@ describe('MySQL dialect tests', () => {
   it('Outputs an inline foreign key', inlineFkTest);
   it('Outputs a foreign key', fkTest);
   it('Outputs all indexes', indexesTest);
+  it('Outputs tables with different schemas', schemasTest);
   it('Outputs relations written with the RQB API', rqbTest);
+  it('Outputs tables with different schemas with the RQB API', schemasRQBTest);
   it('Outputs the result of a more "realistic" schema', realTest);
 });

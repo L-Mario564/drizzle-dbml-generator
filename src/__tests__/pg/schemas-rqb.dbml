@@ -1,0 +1,10 @@
+table schema1.table1 {
+  id serial [pk, not null, increment]
+  table2_id integer
+}
+
+table schema2.table2 {
+  id serial [pk, not null, increment]
+}
+
+ref table1_table2_id_table2_id_fk: schema1.table1.table2_id > schema2.table2.id [delete: no action, update: no action]

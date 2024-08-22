@@ -221,15 +221,33 @@ export abstract class BaseGenerator<
 
   private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[]) {
     for (let i = 0; i < fks.length; i++) {
-      const dbml = new DBML()
-        .insert(`ref ${fks[i].getName()}: `)
-        .escapeSpaces((fks[i].table as unknown as AnyTable)[TableName])
+      const sourceTable = fks[i].table as unknown as AnyTable;
+      const foreignTable = fks[i].reference().foreignTable as unknown as AnyTable;
+      const sourceSchema = sourceTable[Schema];
+      const foreignSchema = foreignTable[Schema];
+      const sourceColumns = fks[i].reference().columns;
+      const foreignColumns = fks[i].reference().foreignColumns;
+
+      const dbml = new DBML().insert(`ref ${fks[i].getName()}: `);
+
+      if (sourceSchema) {
+        dbml.escapeSpaces(sourceSchema).insert('.');
+      }
+
+      dbml
+        .escapeSpaces(sourceTable[TableName])
         .insert('.')
-        .insert(wrapColumns(fks[i].reference().columns, this.buildQueryConfig.escapeName))
-        .insert(' > ')
-        .escapeSpaces((fks[i].reference().foreignTable as unknown as AnyTable)[TableName])
+        .insert(wrapColumns(sourceColumns, this.buildQueryConfig.escapeName))
+        .insert(' > ');
+
+      if (foreignSchema) {
+        dbml.escapeSpaces(foreignSchema).insert('.');
+      }
+
+      dbml
+        .escapeSpaces(foreignTable[TableName])
         .insert('.')
-        .insert(wrapColumns(fks[i].reference().foreignColumns, this.buildQueryConfig.escapeName));
+        .insert(wrapColumns(foreignColumns, this.buildQueryConfig.escapeName));
 
       const actions: string[] = [
         `delete: ${fks[i].onDelete || 'no action'}`,
@@ -247,8 +265,10 @@ export abstract class BaseGenerator<
       string,
       {
         type: 'one' | 'many';
+        sourceSchema?: string;
         sourceTable?: string;
         sourceColumns?: string[];
+        foreignSchema?: string;
         foreignTable?: string;
         foreignColumns?: string[];
       }
@@ -274,8 +294,10 @@ export abstract class BaseGenerator<
         if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
           left[key] = {
             type: 'one',
+            sourceSchema: (relation.sourceTable as unknown as AnyTable)[Schema],
             sourceTable: (relation.sourceTable as unknown as AnyTable)[TableName],
             sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
+            foreignSchema: (relation.referencedTable as unknown as AnyTable)[Schema],
             foreignTable: relation.referencedTableName,
             foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
           };
@@ -288,7 +310,9 @@ export abstract class BaseGenerator<
     }
 
     for (const key in left) {
+      const sourceSchema = left[key].sourceSchema || '';
       const sourceTable = left[key].sourceTable || '';
+      const foreignSchema = left[key].foreignSchema || '';
       const foreignTable = left[key].foreignTable || '';
       const sourceColumns = left[key].sourceColumns || [];
       const foreignColumns = left[key].foreignColumns || [];
@@ -300,18 +324,28 @@ export abstract class BaseGenerator<
         );
       }
 
-      const dbml = new DBML()
-        .insert('ref: ')
+      const dbml = new DBML().insert('ref: ');
+
+      if (sourceSchema) {
+        dbml.escapeSpaces(sourceSchema).insert('.');
+      }
+
+      dbml
         .escapeSpaces(sourceTable)
         .insert('.')
         .insert(wrapColumnNames(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(` ${relationType === 'one' ? '-' : '>'} `)
+        .insert(` ${relationType === 'one' ? '-' : '>'} `);
+
+      if (foreignSchema) {
+        dbml.escapeSpaces(foreignSchema).insert('.');
+      }
+
+      dbml
         .escapeSpaces(foreignTable)
         .insert('.')
-        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName))
-        .build();
+        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName));
 
-      this.generatedRefs.push(dbml);
+      this.generatedRefs.push(dbml.build());
     }
   }
 
