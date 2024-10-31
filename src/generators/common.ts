@@ -156,7 +156,10 @@ export abstract class BaseGenerator<
     const extraConfigColumns = table[ExtraConfigColumns];
     const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
 
-    const builtIndexes = Object.values(extraConfig ?? {}).map((b: AnyBuilder) => b.build(table));
+    const builtIndexes = Object.values(extraConfig ?? {}).map((b) =>
+      typeof b?.build === 'function' ? b.build(table) : null
+    ).filter(Boolean);
+
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
