@@ -1,6 +1,6 @@
 {
   "name": "drizzle-dbml-generator",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Convert your Drizzle ORM schema into DBML markup",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -30,7 +30,7 @@
     "@types/node": "^20.5.6",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
-    "drizzle-orm": "^0.32.0",
+    "drizzle-orm": "^0.38.0",
     "eslint": "^8.47.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.2",
@@ -39,6 +39,6 @@
     "vitest": "^0.34.3"
   },
   "peerDependencies": {
-    "drizzle-orm": ">=0.32.0"
+    "drizzle-orm": ">=0.36.0"
   }
 }

@@ -1,6 +1,7 @@
 import { DBML } from '~/dbml';
 import { BaseGenerator, writeDBMLFile } from './common';
 import { PgInlineForeignKeys } from '~/symbols';
+import { CasingCache } from 'drizzle-orm/casing';
 import type { BuildQueryConfig } from 'drizzle-orm';
 import type { AnyPgColumn, PgEnum } from 'drizzle-orm/pg-core';
 import type { PgSchema, Options } from '~/types';
@@ -10,7 +11,8 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
   protected override buildQueryConfig: BuildQueryConfig = {
     escapeName: (name) => `"${name}"`,
     escapeParam: (num) => `$${num + 1}`,
-    escapeString: (str) => `'${str.replace(/'/g, "''")}'`
+    escapeString: (str) => `'${str.replace(/'/g, "''")}'`,
+    casing: new CasingCache()
   };
 
   protected override isIncremental(column: AnyPgColumn) {

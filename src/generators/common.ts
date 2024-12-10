@@ -25,22 +25,26 @@ import {
   PrimaryKey as PgPrimaryKey,
   UniqueConstraint as PgUniqueConstraint,
   isPgEnum,
-  PgTable
+  PgTable,
+  Check as PgCheck
 } from 'drizzle-orm/pg-core';
 import {
   ForeignKey as MySqlForeignKey,
   Index as MySqlIndex,
   PrimaryKey as MySqlPrimaryKey,
   MySqlTable,
-  UniqueConstraint as MySqlUniqueConstraint
+  UniqueConstraint as MySqlUniqueConstraint,
+  Check as MySqlCheck
 } from 'drizzle-orm/mysql-core';
 import {
   ForeignKey as SQLiteForeignKey,
   Index as SQLiteIndex,
   PrimaryKey as SQLitePrimaryKey,
   SQLiteTable,
-  UniqueConstraint as SQLiteUniqueConstraint
+  UniqueConstraint as SQLiteUniqueConstraint,
+  Check as SQLiteCheck
 } from 'drizzle-orm/sqlite-core';
+import { CasingCache } from 'drizzle-orm/casing';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import type {
@@ -66,7 +70,8 @@ export abstract class BaseGenerator<
   protected buildQueryConfig: BuildQueryConfig = {
     escapeName: () => '',
     escapeParam: () => '',
-    escapeString: () => ''
+    escapeString: () => '',
+    casing: new CasingCache()
   };
 
   constructor(schema: Schema, relational: boolean) {
@@ -156,7 +161,13 @@ export abstract class BaseGenerator<
     const extraConfigColumns = table[ExtraConfigColumns];
     const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
 
-    const builtIndexes = Object.values(extraConfig ?? {}).map((b: AnyBuilder) => b.build(table));
+    const builtIndexes = (
+      Array.isArray(extraConfig) ? extraConfig : Object.values(extraConfig ?? {})
+    )
+      .map((b: AnyBuilder) => b?.build(table))
+      .filter((b) => b !== undefined)
+      // The DBML markup language doesn't support check constraints
+      .filter((index) => !(is(index, PgCheck) || is(index, MySqlCheck) || is(index, SQLiteCheck)));
     const fks = builtIndexes.filter(
       (index) =>
         is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)

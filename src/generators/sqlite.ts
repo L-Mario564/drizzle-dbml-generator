@@ -2,6 +2,7 @@ import { BaseGenerator, writeDBMLFile } from './common';
 import { SQLiteInlineForeignKeys } from '~/symbols';
 import { is, SQL } from 'drizzle-orm';
 import { SQLiteBaseInteger } from 'drizzle-orm/sqlite-core';
+import { CasingCache } from 'drizzle-orm/casing';
 import type { BuildQueryConfig } from 'drizzle-orm';
 import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SQLiteSchema, Options } from '~/types';
@@ -11,7 +12,8 @@ class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
   protected override buildQueryConfig: BuildQueryConfig = {
     escapeName: (name) => `"${name}"`,
     escapeParam: (_num) => '?',
-    escapeString: (str) => `'${str.replace(/'/g, "''")}'`
+    escapeString: (str) => `'${str.replace(/'/g, "''")}'`,
+    casing: new CasingCache()
   };
 
   protected override isIncremental(column: AnySQLiteColumn) {
